@@ -1,41 +1,19 @@
 import csv
-import sys
+# import sys
 import argparse
 import os
-import matplotlib
-matplotlib.use('TkAgg')
+# import matplotlib
+# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
-import tkinter as tk
-from tkinter import ttk
-
-# class Application(tk.Frame):
-#     def __init__(self, figure, master=None):
-#         tk.Frame.__init__(self, master)
-#         self.grid()
-#         self.createWidgets()
-#         print('jere 1')
-#
-#         canvas = FigureCanvasTkAgg(figure, self)
-#         print(figure)
-#         print(canvas)
-#         canvas.show()
-#         print('here3')
-#         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-#         print('here4')
-#         toolbar = NavigationToolbar2TkAgg(canvas, self)
-#         toolbar.update()
-#         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-#
-#
-#     def createWidgets(self):
-#         self.quitButton = ttk.Button(self, text='Quit', command=self.quit)
-#         self.quitButton.grid()
+# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+# import tkinter as tk
+# from tkinter import ttk
 
 #graphs dict holds all graphs to be plotted
 graphs = {}
 
+#Series object stores information about the series to be graphed
 class Series:
     def __init__(self, graph_path):
         self.show = True
@@ -60,20 +38,11 @@ class Series:
     def hide(self):
         self.show = False
 
+#checks if csv file exists in specified path
 def check_path(graph_path):
     return os.path.isfile(graph_path) and graph_path.lower().endswith(".csv")
 
-def create_graph(graph_path):
-    x_temp = []
-    y_temp = []
-    with open(graph_path, newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            x_temp.append(row[0])
-            y_temp.append(row[1])
-    graph_name = os.path.split(graph_path)[1].lower()[:-4]
-    graphs[graph_name] = [x_temp, y_temp, graph_path]
-
+#TODO: Needs a lot of work
 def plot_graphs():
     # set up figure
     fig = plt.figure(figsize=(9,5))
@@ -83,9 +52,9 @@ def plot_graphs():
 
     for series in graphs:
         # print(graphs[series].get_attr())
-        p1.plot(graphs[series].x,graphs[series].y, label=graphs[series].label)
-        p2.plot(graphs[series].x,graphs[series].y, label=graphs[series].label)
-        p3.plot(graphs[series].x,graphs[series].y, label=graphs[series].label)
+        p1.plot(graphs[series].x, graphs[series].y, label=graphs[series].label)
+        p2.plot(graphs[series].x, graphs[series].y, label=graphs[series].label)
+        p3.plot(graphs[series].x, graphs[series].y, label=graphs[series].label)
 
     #adjust settings
     p1.set_xlabel('Frequency (kHz)')
@@ -105,13 +74,36 @@ def plot_graphs():
     # plt.show()
     return fig
 
+#TODO: Needs a lot of work
+def write_csv(of):
+    labels = ['Frequency (kHz)']
+    xs = []
+    ys = []
+    rows = []
+    for series in graphs:
+        labels.append(graphs[series].label)
+        xs.append(graphs[series].x)
+        ys.append(graphs[series].y)
+    rows.append(labels)
+    for index, val in enumerate(xs[0], start = 0):
+        # print(index, val)
+        rows.append([])
+        rows[index+1].append(xs[0][index])
+        for y in ys:
+            rows[index+1].append(y[index])
+        with open(of, 'w', newline='') as newcsv:
+            writer = csv.writer(newcsv)
+            writer.writerows(rows)
+
 def main():
     #argument parsing
-    parser = argparse.ArgumentParser(description="Plots one or more .csv files")
-    parser.add_argument('-f', dest='f', required = False,
-        help="Specify path to a csv file to graph")
-    parser.add_argument('-d', dest='dir', default='./', required = False,
-        help="Specify a directory of csv files to graph")
+    parser = argparse.ArgumentParser(description='Plots one or more .csv files')
+    parser.add_argument('-f', dest='f', required=False,
+        help='Specify path to a csv file to graph')
+    parser.add_argument('-d', dest='dir', default='./', required=False,
+        help='Specify a directory of csv files to graph')
+    parser.add_argument('-o', dest='of', required=False,
+        help='Specify an output filename to condense all csv files into one')
     args = parser.parse_args()
 
     #procedure if file is specified
@@ -132,15 +124,17 @@ def main():
             if check_path(graph_path):
                 Series(graph_path)
 
+    #plot that ish
     fig = plot_graphs()
     plt.show()
 
-    # app = Application(fig)
-    # app.master.title('Sample application')
-    # app.mainloop()
+    #for now, combine everything in graphs into one csv and print it
+    if args.of:
+        write_csv(args.of)
 
     #it's over... go home.
     print("Terminating script")
+    return 0
 
 if __name__ == '__main__':
     main()
