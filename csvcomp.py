@@ -91,9 +91,9 @@ def write_csv(of):
         rows[index+1].append(xs[0][index])
         for y in ys:
             rows[index+1].append(y[index])
-        with open(of, 'w', newline='') as newcsv:
-            writer = csv.writer(newcsv)
-            writer.writerows(rows)
+    with open(of, 'w', newline='') as newcsv:
+        writer = csv.writer(newcsv)
+        writer.writerows(rows)
 
 def main():
     #argument parsing
@@ -102,7 +102,7 @@ def main():
         help='Specify path to a csv file to graph')
     parser.add_argument('-d', dest='dir', default='./', required=False,
         help='Specify a directory of csv files to graph')
-    parser.add_argument('-o', dest='of', required=False,
+    parser.add_argument('-o', dest='of', default='../CombinedCSV.csv', required=False,
         help='Specify an output filename to condense all csv files into one')
     args = parser.parse_args()
 
