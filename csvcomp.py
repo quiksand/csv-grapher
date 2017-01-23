@@ -63,15 +63,19 @@ def plot_graphs():
     p1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
     p2.set_xlabel('Frequency (kHz)')
     p2.set_ylabel('Amplitude (V)')
+    p2.set_ylim(0, 0.0001)
     p2.set_xlim(2, 9)
     p2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
     p3.set_xlabel('Frequency (kHz)')
-    p3.set_ylabel('Amplitude (V)')
+    # p3.set_ylabel('Amplitude (V)')
+    p3.set_ylim(0, 0.00005)
     p3.set_xlim(40, 48)
     p3.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
     # p3.autoscale_view()
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     # plt.show()
+    fig.tight_layout()
+    plt.subplots_adjust(right=0.8)
     return fig
 
 #TODO: Needs a lot of work
