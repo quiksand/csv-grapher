@@ -33,17 +33,59 @@ from tkinter import ttk
 #         self.quitButton = ttk.Button(self, text='Quit', command=self.quit)
 #         self.quitButton.grid()
 
-def plot_graphs(graphs):
+#graphs dict holds all graphs to be plotted
+graphs = {}
+
+class Series:
+    def __init__(self, graph_path):
+        self.show = True
+        self.x = []
+        self.y = []
+        self.graph_path = graph_path
+        self.label = os.path.split(graph_path)[1].lower()[:-4]
+        with open(graph_path, newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                self.x.append(row[0])
+                self.y.append(row[1])
+        graphs[self.label] = self
+    def __del__(self):
+        del graphs[self.label]
+    def __str__(self):
+        return self.graph_path
+    def get_attr(self):
+        print(self.label, self.graph_path, self.show)
+    def show(self):
+        self.show = True
+    def hide(self):
+        self.show = False
+
+def check_path(graph_path):
+    return os.path.isfile(graph_path) and graph_path.lower().endswith(".csv")
+
+def create_graph(graph_path):
+    x_temp = []
+    y_temp = []
+    with open(graph_path, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            x_temp.append(row[0])
+            y_temp.append(row[1])
+    graph_name = os.path.split(graph_path)[1].lower()[:-4]
+    graphs[graph_name] = [x_temp, y_temp, graph_path]
+
+def plot_graphs():
     # set up figure
     fig = plt.figure(figsize=(9,5))
     p1 = fig.add_subplot(211)
     p2 = fig.add_subplot(223)
     p3 = fig.add_subplot(224)
 
-    for graph in graphs:
-        p1.plot(graphs[graph][0],graphs[graph][1], label=graph)
-        p2.plot(graphs[graph][0],graphs[graph][1], label=graph)
-        p3.plot(graphs[graph][0],graphs[graph][1], label=graph)
+    for series in graphs:
+        # print(graphs[series].get_attr())
+        p1.plot(graphs[series].x,graphs[series].y, label=graphs[series].label)
+        p2.plot(graphs[series].x,graphs[series].y, label=graphs[series].label)
+        p3.plot(graphs[series].x,graphs[series].y, label=graphs[series].label)
 
     #adjust settings
     p1.set_xlabel('Frequency (kHz)')
@@ -60,7 +102,8 @@ def plot_graphs(graphs):
     p3.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
     # p3.autoscale_view()
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    plt.show()
+    # plt.show()
+    return fig
 
 def main():
     #argument parsing
@@ -71,41 +114,26 @@ def main():
         help="Specify a directory of csv files to graph")
     args = parser.parse_args()
 
-    #graphs dict holds all graphs to be plotted
-    graphs = {}
-
     #procedure if file is specified
     if args.f:
-        #check existence and format of file to be opened
-        if not (os.path.isfile(args.f) and args.f.lower().endswith(".csv")):
+        #open file and save to graphs dict if correct format
+        graph_path = os.path.abspath(args.f)
+        if not check_path(graph_path):
             print("Error: File path does not exist or is not correct format")
             return 1
-        #open file and save to graphs dict
-        x_temp = []
-        y_temp = []
-        with open(args.f, newline='') as csvfile:
-            reader = csv.reader(csvfile)
-            for row in reader:
-                x_temp.append(row[0])
-                y_temp.append(row[1])
-        graphs[args.f[:-4]] = [x_temp, y_temp]
+        # create_graph(graph_path)
+        Series(graph_path)
 
     #procedure if directory is given or file not specified
     else:
         #open files in directory and save to graphs dict if correct format
         for f in os.listdir(args.dir):
-            x_temp = []
-            y_temp = []
-            graph_path = os.path.join(args.dir, f)
-            if os.path.isfile(graph_path) and f.lower().endswith(".csv"):
-                with open(graph_path, newline='') as csvfile:
-                    reader = csv.reader(csvfile)
-                    for row in reader:
-                        x_temp.append(row[0])
-                        y_temp.append(row[1])
-                graphs[f.lower()[:-4]] = [x_temp, y_temp, graph_path]
+            graph_path = os.path.abspath(os.path.join(args.dir, f))
+            if check_path(graph_path):
+                Series(graph_path)
 
-    plot_graphs(graphs)
+    fig = plot_graphs()
+    plt.show()
 
     # app = Application(fig)
     # app.master.title('Sample application')
