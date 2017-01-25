@@ -4,27 +4,19 @@ import argparse
 import os
 import matplotlib
 matplotlib.use('TkAgg')
-from matplotlib.widgets import MultiCursor
+# from matplotlib.widgets import MultiCursor
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog
+from tkinter import messagebox
+# from tkinter.filedialog import askopenfilename
+# from tkinter.messagebox import showerror
 
-#graphs dict holds all series to be plotted
+#graphs dict holds all series to be plotted - Move inside Series class
 graphs = {}
-
-#tk application
-# class Application(tk.Frame):
-#     def __init__(self, master=None):
-#         tk.Frame.__init__(self, master)
-#         self.grid()
-#         self.createWidgets()
-#
-#     def createWidgets(self):
-#         self.quitButton = ttk.Button(self, text='Quit', command=self.quit)
-#         self.quitButton.grid()
-
 
 #Series object stores information about the series to be graphed
 class Series:
@@ -55,42 +47,49 @@ class Series:
 def check_path(graph_path):
     return os.path.isfile(graph_path) and graph_path.lower().endswith(".csv")
 
+def export_csv():
+    print('TODO: Export CSV')
+    write_csv('../CombinedCSV.csv')
+
+
 #TODO: Needs a lot of work
 def plot_graphs():
     # set up figure
     fig = plt.figure()#figsize=(9,5))
-    p1 = fig.add_subplot(211)
-    p2 = fig.add_subplot(223)
-    p3 = fig.add_subplot(224)
+    p1 = fig.add_subplot(111)
+    # p1 = fig.add_subplot(211)
+    # p2 = fig.add_subplot(223)
+    # p3 = fig.add_subplot(224)
 
     for series in graphs:
         # print(graphs[series].get_attr())
         p1.plot(graphs[series].x, graphs[series].y, label=graphs[series].label)
-        p2.plot(graphs[series].x, graphs[series].y, label=graphs[series].label)
-        p3.plot(graphs[series].x, graphs[series].y, label=graphs[series].label)
+        # p2.plot(graphs[series].x, graphs[series].y, label=graphs[series].label)
+        # p3.plot(graphs[series].x, graphs[series].y, label=graphs[series].label)
 
     #adjust settings
-    multi = MultiCursor(fig.canvas, (p1, p2), color='r', lw=1,
-                    horizOn=False, vertOn=True)
+    # multi = MultiCursor(fig.canvas, (p1, p2), color='r', lw=1,
+                    # horizOn=False, vertOn=True)
     p1.set_xlabel('Frequency (kHz)')
     p1.set_ylabel('Amplitude (V)')
     p1.set_xlim(0, 1)
     p1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
-    p2.set_xlabel('Frequency (kHz)')
-    p2.set_ylabel('Amplitude (V)')
-    p2.set_ylim(0, 0.00015)
-    p2.set_xlim(2, 12)
-    p2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.00e'))
-    p3.set_xlabel('Frequency (kHz)')
+    # p2.set_xlabel('Frequency (kHz)')
+    # p2.set_ylabel('Amplitude (V)')
+    # p2.set_ylim(0, 0.00015)
+    # p2.set_xlim(2, 12)
+    # p2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.00e'))
+    # p3.set_xlabel('Frequency (kHz)')
     # p3.set_ylabel('Amplitude (V)')
-    p3.set_ylim(0, 0.0001)
-    p3.set_xlim(36, 40)
-    p3.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
+    # p3.set_ylim(0, 0.0001)
+    # p3.set_xlim(36, 40)
+    # p3.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
     # p3.autoscale_view()
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    # plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.legend()
     # plt.show()
-    fig.tight_layout()
-    plt.subplots_adjust(right=0.8)
+    # fig.tight_layout()
+    # plt.subplots_adjust(right=0.8)
     return fig
 
 #TODO: Needs a lot of work
@@ -114,6 +113,20 @@ def write_csv(of):
         writer = csv.writer(newcsv)
         writer.writerows(rows)
 
+def load_file():
+    fname = tk.filedialog.askopenfilename(filetypes=(("Template files", "*.tplate"),
+                                       ("HTML files", "*.html;*.htm"),
+                                       ("All files", "*.*") ))
+    if fname:
+        try:
+            print("""here it comes: self.settings["template"].set(fname)""")
+        except:                     # <- naked except is a bad idea
+            tk.messagebox.showerror("Open Source File", "Failed to read file\n'%s'" % fname)
+        return
+
+
+
+
 def main():
 
     #argument parsing
@@ -130,9 +143,11 @@ def main():
     root = tk.Tk()
     root.title("CSV Grapher")
     # content = ttk.Frame(root)
-    # root.geometry("800x600+10+10")
-    # root.resizable(0, 0)
-    # app = Application(master=root)
+    # content.grid()
+    # frame = ttk.Frame(content, borderwidth=5, relief="sunken", width=200, height=100)
+    # frame.grid()
+    # namelbl = ttk.Label(content, text="Name")
+    # name = ttk.Entry(content)
 
 
     #procedure if file is specified
@@ -159,11 +174,12 @@ def main():
     # a tk.DrawingArea
     canvas = FigureCanvasTkAgg(fig, master=root)
     # canvas.show()
-    canvas.get_tk_widget().grid(column=0, row=0, rowspan=5, sticky="NW")
-    # canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+    # canvas.get_tk_widget().grid()
+    canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
     toolbar = NavigationToolbar2TkAgg(canvas, root)
     toolbar.update()
+    # canvas._tkcanvas.pack()
     canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
 
@@ -171,13 +187,17 @@ def main():
         root.quit()     # stops mainloop
         root.destroy()  # this is necessary on Windows to prevent
                         # Fatal Python Error: PyEval_RestoreThread: NULL tstate
-    newframe = tk.Frame(master=root)
-    newframe.grid(column=10, row=10)
-    button = tk.Button(master=newframe, text='QuitFUCK!!!', command=_quit)
-    button.pack(side=tk.LEFT)
-    #
-    # button = tk.Button(master=root, text='Quit', command=_quit)
-    # button.pack()
+
+    # newframe = tk.Frame(master=root)
+    # newframe.grid(column=10, row=10)
+    export_button = ttk.Button(master=root, text='Export CSV', command=export_csv)
+    export_button.pack()
+
+    quit_button = ttk.Button(master=root, text='Quit', command=_quit)
+    quit_button.pack()
+
+    open_button = ttk.Button(master=root, text="Add file...", command=load_file)
+    open_button.pack()
 
     tk.mainloop()
     # If you put root.destroy() here, it will cause an error if
@@ -191,8 +211,9 @@ def main():
 
     # plt.show()
 
+    #remove when feature is better developed
     #for now, combine everything in graphs into one csv and print it
-    write_csv(args.of)
+    # write_csv(args.of)
 
     #it's over... go home.
     print("Terminating script")
@@ -204,3 +225,39 @@ def main():
 
 if __name__ == '__main__':
     main()
+#
+#
+# from tkinter import *
+# from tkinter import ttk
+#
+# root = Tk()
+#
+# content = ttk.Frame(root)
+# frame = ttk.Frame(content, borderwidth=5, relief="sunken", width=200, height=100)
+# namelbl = ttk.Label(content, text="Name")
+# name = ttk.Entry(content)
+#
+# onevar = BooleanVar()
+# twovar = BooleanVar()
+# threevar = BooleanVar()
+# onevar.set(True)
+# twovar.set(False)
+# threevar.set(True)
+#
+# one = ttk.Checkbutton(content, text="One", variable=onevar, onvalue=True)
+# two = ttk.Checkbutton(content, text="Two", variable=twovar, onvalue=True)
+# three = ttk.Checkbutton(content, text="Three", variable=threevar, onvalue=True)
+# ok = ttk.Button(content, text="Okay")
+# cancel = ttk.Button(content, text="Cancel")
+#
+# content.grid(column=0, row=0)
+# frame.grid(column=0, row=0, columnspan=3, rowspan=2)
+# namelbl.grid(column=3, row=0, columnspan=2)
+# name.grid(column=3, row=1, columnspan=2)
+# one.grid(column=0, row=3)
+# two.grid(column=1, row=3)
+# three.grid(column=2, row=3)
+# ok.grid(column=3, row=3)
+# cancel.grid(column=4, row=3)
+#
+# root.mainloop()
