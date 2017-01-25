@@ -15,6 +15,7 @@ from tkinter import messagebox
 #Series object stores information about the series to be graphed
 class Series:
     obj_list = {}
+    fig = plt.figure()
     def __init__(self, path_to_csv):
         self.show = True
         self.x = []
@@ -43,9 +44,13 @@ class Series:
         self.show = True
     def hide(self):
         self.show = False
-    def plot_series():
-        self.fig = plt.figure()
-        p1 = fig.add_subplot(111)
+    # def generate_fig():
+    def update_fig(self):
+        print('updating fig')
+        for series in Series.obj_list.values():
+            p1.plot(series.x, series.y, label=series.label)
+    def plot_series(self):
+        p1 = Series.fig.add_subplot(111)
         # p1 = fig.add_subplot(211)
         # p2 = fig.add_subplot(223)
         # p3 = fig.add_subplot(224)
@@ -83,6 +88,7 @@ def plot_graphs():
         # p2.plot(Series.obj_list[series].x, Series.obj_list[series].y, label=Series.obj_list[series].label)
         # p3.plot(Series.obj_list[series].x, Series.obj_list[series].y, label=Series.obj_list[series].label)
     #adjust settings
+    print(p1.lines)
     p1.set_xlabel('Frequency (kHz)')
     p1.set_ylabel('Amplitude (V)')
     p1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
