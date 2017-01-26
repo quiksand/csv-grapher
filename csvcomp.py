@@ -12,6 +12,20 @@ from tkinter import ttk
 from tkinter import filedialog
 from tkinter import messagebox
 
+class GUI(tk.Frame):
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+        master.title("CSV Grapher")
+        #
+        # export_button = ttk.Button(master=root, text='Export CSV', command=export_csv)
+        # export_button.pack()
+        # quit_button = ttk.Button(master=root, text='Quit', command=_quit)
+        # quit_button.pack()
+        # open_button = ttk.Button(master=root, text="Add file...", command=load_file)
+        # open_button.pack()
+        # close_button = ttk.Button(master=root, text="Remove file...", command=Series.remove_series)
+        # close_button.pack()
+
 #Series object stores information about the series to be graphed
 class Series:
     obj_list = {}
@@ -25,6 +39,7 @@ class Series:
         self.readin_csv()
         # self.remove_title_rows()
         Series.obj_list[self.label] = self
+
     def readin_csv(self):
         with open(self.csv_path, newline='') as csvfile:
             reader = csv.reader(csvfile)
@@ -49,22 +64,29 @@ class Series:
         print('updating fig')
         for series in Series.obj_list.values():
             p1.plot(series.x, series.y, label=series.label)
-    def plot_series(self):
+    # @staticmethod
+    def generate_fig():
+        Series.fig = plt.figure()
         p1 = Series.fig.add_subplot(111)
+        for series in Series.obj_list.values():
+            print(Series.fig)
+        print(p1)
         # p1 = fig.add_subplot(211)
         # p2 = fig.add_subplot(223)
         # p3 = fig.add_subplot(224)
-        for series in Series.obj_list.values():
-            p1.plot(series.x, series.y, label=series.label)
-            # p2.plot(Series.obj_list[series].x, Series.obj_list[series].y, label=Series.obj_list[series].label)
-            # p3.plot(Series.obj_list[series].x, Series.obj_list[series].y, label=Series.obj_list[series].label)
-        #adjust settings
         p1.set_xlabel('Frequency (kHz)')
         p1.set_ylabel('Amplitude (V)')
         p1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
         p1.set_xlim(0, 1)
         plt.legend()
-        return fig
+    def remove_series():
+        print(Series.fig.axes)
+        # Series.fig.p1.lines[0].remove()
+    def plot_series():
+        print('placeholder')
+        for series in Series.obj_list.values():
+            print(Series.fig)
+            Series.p1.plot(series.x, series.y, label=series.label)
 
 #checks if csv file exists in specified path
 def check_path(csv_path):
@@ -85,10 +107,11 @@ def plot_graphs():
     # p3 = fig.add_subplot(224)
     for series in Series.obj_list.values():
         p1.plot(series.x, series.y, label=series.label)
+        print(p1.lines[-1])
+
         # p2.plot(Series.obj_list[series].x, Series.obj_list[series].y, label=Series.obj_list[series].label)
         # p3.plot(Series.obj_list[series].x, Series.obj_list[series].y, label=Series.obj_list[series].label)
     #adjust settings
-    print(p1.lines)
     p1.set_xlabel('Frequency (kHz)')
     p1.set_ylabel('Amplitude (V)')
     p1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
@@ -159,8 +182,9 @@ def main():
     root.title("CSV Grapher")
 
     #plot that ish
-    fig = plot_graphs()
-
+    # fig = plot_graphs()
+    Series.generate_fig()
+    fig = Series.fig
     # a tk.DrawingArea
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
@@ -183,11 +207,26 @@ def main():
     open_button = ttk.Button(master=root, text="Add file...", command=load_file)
     open_button.pack()
 
+    close_button = ttk.Button(master=root, text="Remove file...", command=Series.remove_series)
+    close_button.pack()
+
     tk.mainloop()
     # If you put root.destroy() here, it will cause an error if
     # the window is closed with the window manager.
 
     return 0
+
+#
+# def main():
+#     root = tk.Tk()
+#     app = GUI(root)
+#     app.pack(expand=True, fill=tk.BOTH)
+#     root.mainloop()
+#     return 0
+#
+
+
+
 
 if __name__ == '__main__':
     main()
