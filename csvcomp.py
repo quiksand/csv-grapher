@@ -16,15 +16,30 @@ class GUI(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
         master.title("CSV Grapher")
-        #
-        # export_button = ttk.Button(master=root, text='Export CSV', command=export_csv)
-        # export_button.pack()
-        # quit_button = ttk.Button(master=root, text='Quit', command=_quit)
-        # quit_button.pack()
-        # open_button = ttk.Button(master=root, text="Add file...", command=load_file)
-        # open_button.pack()
-        # close_button = ttk.Button(master=root, text="Remove file...", command=Series.remove_series)
-        # close_button.pack()
+
+        #export button
+        self.export_button = ttk.Button(master=root,
+                                    text='Export CSV',
+                                    command=self.export_csv)
+        self.export_button.pack()
+        #quit button
+        self.quit_button = ttk.Button(master=root,
+                                    text='Quit',
+                                    command=self._quit)
+        self.quit_button.pack()
+        self.open_button = ttk.Button(master=root,
+                                    text="Add file...",
+                                    command=self.load_file)
+        self.open_button.pack()
+        #close button
+        close_button = ttk.Button(master=root,
+                                    text="Remove file...",
+                                    command=self.remove_series)
+        close_button.pack()
+
+    def _quit(self):
+        self.master.quit()
+        self.master.destroy()
 
 #Series object stores information about the series to be graphed
 class Series:
@@ -193,22 +208,22 @@ def main():
     toolbar.update()
     canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-    def _quit():
-        root.quit()     # stops mainloop
-        root.destroy()  # this is necessary on Windows to prevent
-                        # Fatal Python Error: PyEval_RestoreThread: NULL tstate
+    # def _quit():
+    #     root.quit()     # stops mainloop
+    #     root.destroy()  # this is necessary on Windows to prevent
+    #                     # Fatal Python Error: PyEval_RestoreThread: NULL tstate
 
-    export_button = ttk.Button(master=root, text='Export CSV', command=export_csv)
-    export_button.pack()
-
-    quit_button = ttk.Button(master=root, text='Quit', command=_quit)
-    quit_button.pack()
-
-    open_button = ttk.Button(master=root, text="Add file...", command=load_file)
-    open_button.pack()
-
-    close_button = ttk.Button(master=root, text="Remove file...", command=Series.remove_series)
-    close_button.pack()
+    # export_button = ttk.Button(master=root, text='Export CSV', command=export_csv)
+    # export_button.pack()
+    #
+    # quit_button = ttk.Button(master=root, text='Quit', command=_quit)
+    # quit_button.pack()
+    #
+    # open_button = ttk.Button(master=root, text="Add file...", command=load_file)
+    # open_button.pack()
+    #
+    # close_button = ttk.Button(master=root, text="Remove file...", command=Series.remove_series)
+    # close_button.pack()
 
     tk.mainloop()
     # If you put root.destroy() here, it will cause an error if
