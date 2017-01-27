@@ -18,6 +18,8 @@ class GUI(tk.Frame):
         master.protocol('WM_DELETE_WINDOW', self._quit)
         self.no_of_subplots = 1
         self.subplot_layouts = [[111],[211,212],[211,223,224],[221,222,223,224]]
+        self.subplots = [None]*self.no_of_subplots
+
         #export button
         self.export_button = ttk.Button(self,
                                     text='Export CSV',
@@ -48,17 +50,7 @@ class GUI(tk.Frame):
                                     command=self.remove_a_subplot)
         remove_plot_button.pack()
 
-
         self.fig = plt.figure()
-        # self.p1 = self.fig.add_subplot(111)
-        # self.p1.set_xlabel('Frequency (kHz)')
-        # self.p1.set_ylabel('Amplitude (V)')
-        # self.p1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
-        # self.p1.set_xlim(0, 1)
-        # for series in Series.obj_list.values():
-        #     if series.show:
-        #         self.p1.plot(series.x, series.y, label=series.label)
-        # self.leg = plt.legend()
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
         self.canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
@@ -67,18 +59,20 @@ class GUI(tk.Frame):
         self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
         self.adjust_subplots()
+        SeriesList(self)
 
-    def set_axes(self):
-        self.fig = plt.figure()
-        self.p1 = self.fig.add_subplot(111)
-        self.p1.set_xlabel('Frequency (kHz)')
-        self.p1.set_ylabel('Amplitude (V)')
-        self.p1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
-        self.p1.set_xlim(0, 1)
+    # def set_axes(self):
+    #     self.fig = plt.figure()
+    #     self.p1 = self.fig.add_subplot(111)
+    #     self.p1.set_xlabel('Frequency (kHz)')
+    #     self.p1.set_ylabel('Amplitude (V)')
+    #     self.p1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
+    #     self.p1.set_xlim(0, 1)
     def plot_series(self, series):
         for ax in self.fig.axes:
             if series.show:
                 ax.plot(series.x, series.y, label=series.label)
+                series.axes_index = len(ax.lines)
                 self.legend = plt.legend()
         self.canvas.show()
     def plot_multiple_series(self):
@@ -86,10 +80,13 @@ class GUI(tk.Frame):
             self.plot_series(series)
     def adjust_subplots(self):
         self.fig.clear()
-        self.subplots = [None]*self.no_of_subplots
         for i, j in enumerate(self.subplot_layouts[self.no_of_subplots-1]):
             self.subplots[i] = self.fig.add_subplot(j)
+            self.subplots[i].set_xlabel('Frequency (kHz)')
+            self.subplots[i].set_ylabel('Amplitude (V)')
+            self.subplots[i].set_xlim(0, 1.5)
         self.plot_multiple_series()
+        self.fig.tight_layout()
         self.canvas.show()
         # self.canvas.draw()
     def add_a_subplot(self):
@@ -143,6 +140,44 @@ class GUI(tk.Frame):
                 new_series = Series(fname)
                 self.plot_series(new_series)
 
+class SeriesList(GUI):
+    rows = []
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+        self.var = tk.StringVar()
+        self.checkvar = tk.IntVar()
+        self.generate_sl_row(Series.obj_list['delete'])
+        # self.sl_row.pack()
+
+    #TODO: Make it work!
+    def generate_sl_row(self, series):
+        self.sl_row = tk.Frame()
+        #fg=color option in tk items to change color
+        self.radio_btn = ttk.Radiobutton(self.sl_row,
+                                    variable=self.var,
+                                    value=series.label,
+                                    command=self.select_cursor)
+        self.radio_btn.grid(row=0, column=0)
+        self.checkbox = ttk.Checkbutton(self.sl_row,
+                                    onvalue=True,
+                                    offvalue=False,
+                                    variable=series.show,
+                                    text=series.label,
+                                    command=self.master.canvas.show)
+        self.checkbox.grid(row=0, column=1)
+
+        self.close_button = ttk.Button(self.sl_row,
+                                    text="Remove file...",
+                                    command=app.remove_series)
+        self.close_button.grid(row=0, column=2)
+        self.sl_row.pack()
+
+    def remove_series(self):
+        for ax in Gui.fig.axes:
+            ax.lines[0].remove()
+        Gui.canvas.show()
+    def select_cursor(self):
+        todo()
 
 #Series object stores information about the series to be graphed
 class Series:
@@ -151,6 +186,7 @@ class Series:
         self.show = True
         self.x = []
         self.y = []
+        self.axes_index = [None]*4
         self.csv_path = path_to_csv
         self.label = os.path.split(self.csv_path)[1].lower()[:-4]
         self.readin_csv()
@@ -174,6 +210,9 @@ class Series:
         self.show = True
     def hide(self):
         self.show = False
+
+def todo():
+    print('TODO')
 
 #TODO: Put this in a class somewhere?
 def check_path(csv_path):
