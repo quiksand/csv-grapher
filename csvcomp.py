@@ -35,20 +35,20 @@ class GUI(tk.Frame):
                                     command=self.load_file)
         self.open_button.pack()
         #close button
-        close_button = ttk.Button(self,
-                                    text="Remove file...",
-                                    command=self.remove_series)
-        close_button.pack()
+        # close_button = ttk.Button(self,
+        #                             text="Remove file...",
+        #                             command=self.remove_series)
+        # close_button.pack()
         #button to add a subplot to figure
-        add_plot_button = ttk.Button(self,
+        self.add_plot_button = ttk.Button(self,
                                     text="Add plot",
                                     command=self.add_a_subplot)
-        add_plot_button.pack()
+        self.add_plot_button.pack()
         #button to remove a subplot from figure
-        remove_plot_button = ttk.Button(self,
+        self.remove_plot_button = ttk.Button(self,
                                     text="Remove Plot",
                                     command=self.remove_a_subplot)
-        remove_plot_button.pack()
+        self.remove_plot_button.pack()
 
         self.fig = plt.figure()
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
@@ -59,15 +59,11 @@ class GUI(tk.Frame):
         self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
         self.adjust_subplots()
-        SeriesList(self)
+        #test list widget
+        self.test = tk.Frame(self)
+        self.add_all_list_items()
+        self.test.pack(side=tk.RIGHT)
 
-    # def set_axes(self):
-    #     self.fig = plt.figure()
-    #     self.p1 = self.fig.add_subplot(111)
-    #     self.p1.set_xlabel('Frequency (kHz)')
-    #     self.p1.set_ylabel('Amplitude (V)')
-    #     self.p1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0e'))
-    #     self.p1.set_xlim(0, 1)
     def plot_series(self, series):
         for ax in self.fig.axes:
             if series.show:
@@ -92,10 +88,12 @@ class GUI(tk.Frame):
     def add_a_subplot(self):
         if self.no_of_subplots < 4:
             self.no_of_subplots += 1
+            self.subplots.append(None)
         self.adjust_subplots()
     def remove_a_subplot(self):
         if self.no_of_subplots > 1:
             self.no_of_subplots -= 1
+            del self.subplots[-1]
         self.adjust_subplots()
     def _quit(self):
         self.master.quit()
@@ -107,12 +105,6 @@ class GUI(tk.Frame):
             ("All files", "*.*") ))
         if fname:
             self.write_csv(fname)
-    #TODO: Change behavior so graphs are selectable
-    #TODO: Change so graphs don't update with Series.obj_list after they have been "deleted"
-    def remove_series(self):
-        for ax in self.fig.axes:
-            ax.lines[0].remove()
-        self.canvas.show()
     def write_csv(self, of):
         #TODO: Simplify. In future, add Excel functionality?
         labels = ['Frequency (kHz)']
@@ -139,43 +131,64 @@ class GUI(tk.Frame):
         if fname:
                 new_series = Series(fname)
                 self.plot_series(new_series)
+    def add_list_item(self, series):
+        Ctrl_Row(self.test, series)
+    def add_all_list_items(self):
+        for series in Series.obj_list.values():
+            self.add_list_item(series)
+    #TODO: Change behavior so graphs are selectable
+    #TODO: Change so graphs don't update with Series.obj_list after they have been "deleted"
+    def remove_list_item(self):
+        # del Ctrl_Row.control_rows[]
+        todo()
 
-class SeriesList(GUI):
-    rows = []
-    def __init__(self, master):
+class Ctrl_Row(GUI):
+    control_rows = {}
+    def __init__(self, master, series):
         tk.Frame.__init__(self, master)
         self.var = tk.StringVar()
         self.checkvar = tk.IntVar()
-        self.generate_sl_row(Series.obj_list['delete'])
-        # self.sl_row.pack()
-
-    #TODO: Make it work!
-    def generate_sl_row(self, series):
-        self.sl_row = tk.Frame()
+        self.generate_row(series)
+    def __del__(self):
+        del Series.obj_list[self.label]
+        del Ctrl_Row.control_rows[self.label]
+        print('\n\n')
+        print(Series.obj_list)
+        print(Ctrl_Row.control_rows)
+    def generate_row(self, series):
         #fg=color option in tk items to change color
-        self.radio_btn = ttk.Radiobutton(self.sl_row,
+        self.radio_btn = ttk.Radiobutton(self,
                                     variable=self.var,
                                     value=series.label,
                                     command=self.select_cursor)
         self.radio_btn.grid(row=0, column=0)
-        self.checkbox = ttk.Checkbutton(self.sl_row,
+        self.checkbox = ttk.Checkbutton(self,
                                     onvalue=True,
                                     offvalue=False,
                                     variable=series.show,
                                     text=series.label,
-                                    command=self.master.canvas.show)
+                                    command=todo)
         self.checkbox.grid(row=0, column=1)
-
-        self.close_button = ttk.Button(self.sl_row,
-                                    text="Remove file...",
-                                    command=app.remove_series)
+        self.close_button = ttk.Button(self,
+                                    text="X",
+                                    command=self.remove_series)
         self.close_button.grid(row=0, column=2)
-        self.sl_row.pack()
-
+        self.pack()
+        self.label = series.label
+        Ctrl_Row.control_rows[series.label] = self
+    #TODO Calling self.master.master... is probably a really dumb way to reach root window
     def remove_series(self):
-        for ax in Gui.fig.axes:
-            ax.lines[0].remove()
-        Gui.canvas.show()
+        for ax in self.master.master.fig.axes:
+            print(ax)
+            print(ax.lines[0].get_label())
+            line = [line for line in ax.lines if line.get_label()==self.label][0]
+            ax.lines.remove(line)
+
+            # ax.lines.remove(self.label)
+        # self.master.master.fig.axes.lines.remove(self.label)
+        # del self
+        self.master.master.canvas.show()
+        self.destroy()
     def select_cursor(self):
         todo()
 
@@ -190,6 +203,7 @@ class Series:
         self.csv_path = path_to_csv
         self.label = os.path.split(self.csv_path)[1].lower()[:-4]
         self.readin_csv()
+        # self.btn_row = SeriesList(self)
         # self.remove_title_rows()
         Series.obj_list[self.label] = self
     def readin_csv(self):
