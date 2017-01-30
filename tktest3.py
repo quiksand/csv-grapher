@@ -158,7 +158,7 @@ def main():
 
     # a tk.DrawingArea
     canvas = FigureCanvasTkAgg(fig, master=root)
-    # canvas.show()
+    canvas.show()
     canvas.get_tk_widget().grid(column=0, row=0, rowspan=5, sticky="NW")
     # canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
