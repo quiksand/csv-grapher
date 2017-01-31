@@ -11,6 +11,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 
+#TODO Rearrange widgets to make more sense in layout
 class GUI(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
@@ -19,51 +20,98 @@ class GUI(tk.Frame):
         self.no_of_subplots = 1
         self.subplot_layouts = [[111],[211,212],[211,223,224],[221,222,223,224]]
         self.subplots = [None]*self.no_of_subplots
-
+        self.xscale = tk.StringVar()
+        self.yscale = tk.StringVar()
+        self.xscale.set(0.8)
+        self.yscale.set(0.005)
         #export button
         self.export_button = ttk.Button(self,
                                     text='Export CSV',
                                     command=self.export_csv)
-        self.export_button.pack()
+        # self.export_button.pack(side=tk.LEFT)
+        self.export_button.grid(row=6, column=0)
         #quit button
-        self.quit_button = ttk.Button(self,
-                                    text='Quit',
-                                    command=self._quit)
-        self.quit_button.pack()
+        # self.quit_button = ttk.Button(self,
+        #                             text='Quit',
+        #                             command=self._quit)
+        # self.quit_button.pack()
         self.open_button = ttk.Button(self,
-                                    text="Add file...",
+                                    text="Add file",
                                     command=self.load_file)
-        self.open_button.pack()
-        #close button
-        # close_button = ttk.Button(self,
-        #                             text="Remove file...",
-        #                             command=self.remove_series)
-        # close_button.pack()
-        #button to add a subplot to figure
+        # self.open_button.pack(side=tk.LEFT)
+        self.open_button.grid(row=6, column=1)
         self.add_plot_button = ttk.Button(self,
                                     text="Add plot",
                                     command=self.add_a_subplot)
-        self.add_plot_button.pack()
+        # self.add_plot_button.pack(side=tk.LEFT)
+        self.add_plot_button.grid(row=6, column=2)
         #button to remove a subplot from figure
         self.remove_plot_button = ttk.Button(self,
                                     text="Remove Plot",
                                     command=self.remove_a_subplot)
-        self.remove_plot_button.pack()
+        # self.remove_plot_button.pack(side=tk.LEFT)
+        self.remove_plot_button.grid(row=6, column=3)
+        self.xscale_label = ttk.Label(self, text='X:', width=9, anchor=tk.E)
+        self.xscale_label.grid(row=5, column=0)
+        self.xscale_box = ttk.Entry(self,
+                                    width=9,
+                                    textvariable=self.xscale)
+        # self.xscale_box.pack()
+        self.xscale_box.grid(row=5, column=1)
+        # self.xbtn = ttk.Button(self,
+        #                             text="Rescale X",
+        #                             command=self.rescale_axes)
+        # self.xbtn.pack()
+        self.yscale_label = ttk.Label(self, text='Y:', width=9, anchor=tk.E)
+        self.yscale_label.grid(row=5, column=3)
+        self.yscale_box = ttk.Entry(self,
+                                    width=9,
+                                    textvariable=self.yscale)
+        # self.yscale_box.pack()
+        self.yscale_box.grid(row=5, column=4)
+        self.resize_button = ttk.Button(self,
+                                    text="Rescale",
+                                    command=self.rescale_axes)
+        # self.resize_button.pack()
+        self.resize_button.grid(row=5, column=2)
 
         self.fig = plt.figure()
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
-        self.canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
-        self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
+        self.graph_frame = tk.Frame(self)
+        self.graph_frame.grid(row=0, column=0, columnspan=5, rowspan=5)
+        # self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)
+        self.canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+        # self.canvas.get_tk_widget().grid(row=0, column=0, columnspan=5, rowspan=5)
+
+        self.toolbar_frame = tk.Frame(self)
+        self.toolbar_frame.grid(row=7, column=0, columnspan=5, sticky=tk.W)
+        # self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
+        self.toolbar = NavigationToolbar2TkAgg(self.canvas, self.toolbar_frame)
         self.toolbar.update()
-        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        self.canvas._tkcanvas.pack(side=tk.LEFT, fill=tk.Y, expand=0)
+        # self.canvas._tkcanvas.grid(row=3, column=0, columnspan=5)
 
         self.adjust_subplots()
         #test list widget
+
         self.test = tk.Frame(self)
         self.add_all_list_items()
-        self.test.pack(side=tk.RIGHT)
+        # self.test.pack(side=tk.RIGHT)
+        self.test.grid(row=0, column=5)
 
+    def rescale_axes(self):
+        self.xscale = self.xscale_box.get()
+        self.yscale = self.yscale_box.get()
+        for i in range(self.no_of_subplots):
+            self.subplots[i].set_xlim(0, float(self.xscale))
+            self.subplots[i].set_ylim(0, float(self.yscale))
+            self.canvas.show()
+            # self.canvas.draw()
+        self.xscale_box.delete(0, tk.END)
+        self.yscale_box.delete(0, tk.END)
+        self.xscale_box.insert(0, self.xscale)
+        self.yscale_box.insert(0, self.yscale)
     def plot_series(self, series):
         for ax in self.fig.axes:
             if series.show:
@@ -80,7 +128,7 @@ class GUI(tk.Frame):
             self.subplots[i] = self.fig.add_subplot(j)
             self.subplots[i].set_xlabel('Frequency (kHz)')
             self.subplots[i].set_ylabel('Amplitude (V)')
-            self.subplots[i].set_xlim(0, 1.5)
+        self.rescale_axes()
         self.plot_multiple_series()
         self.fig.tight_layout()
         self.canvas.show()
@@ -131,6 +179,7 @@ class GUI(tk.Frame):
         if fname:
                 new_series = Series(fname)
                 self.plot_series(new_series)
+                self.add_list_item(new_series)
     def add_list_item(self, series):
         Ctrl_Row(self.test, series)
     def add_all_list_items(self):
@@ -147,43 +196,49 @@ class Ctrl_Row(GUI):
     def __init__(self, master, series):
         tk.Frame.__init__(self, master)
         self.var = tk.StringVar()
-        self.checkvar = tk.IntVar()
-        self.generate_row(series)
-    def __del__(self):
-        del Series.obj_list[self.label]
-        del Ctrl_Row.control_rows[self.label]
-        print('\n\n')
-        print(Series.obj_list)
-        print(Ctrl_Row.control_rows)
-    def generate_row(self, series):
+        self.checkvar = tk.BooleanVar()
+        self.checkvar.set(1)
+        self.series = series
         #fg=color option in tk items to change color
         self.radio_btn = ttk.Radiobutton(self,
                                     variable=self.var,
-                                    value=series.label,
+                                    value=self.series.label,
                                     command=self.select_cursor)
         self.radio_btn.grid(row=0, column=0)
         self.checkbox = ttk.Checkbutton(self,
-                                    onvalue=True,
-                                    offvalue=False,
-                                    variable=series.show,
-                                    text=series.label,
-                                    command=todo)
+                                    # onvalue=True,
+                                    # offvalue=False,
+                                    width=25,
+                                    variable=self.checkvar,
+                                    # variable=self.series.show,
+                                    text=self.series.label,
+                                    command=self.cb)
         self.checkbox.grid(row=0, column=1)
         self.close_button = ttk.Button(self,
                                     text="X",
+                                    width=1,
                                     command=self.remove_series)
         self.close_button.grid(row=0, column=2)
-        self.pack()
+        # self.pack()
+        self.grid()
         self.label = series.label
         Ctrl_Row.control_rows[series.label] = self
+    #TODO Check this and all __del__() methods to make sure they are doing anything
+    # def __del__(self):
+        # del Series.obj_list[self.label]
+        # del Ctrl_Row.control_rows[self.label]
+    #TODO Make this update faster (play with artists)
+    def cb(self):
+        self.series.show = self.checkvar.get()
+        self.master.master.adjust_subplots()
+
     #TODO Calling self.master.master... is probably a really dumb way to reach root window
     def remove_series(self):
         for ax in self.master.master.fig.axes:
-            print(ax)
-            print(ax.lines[0].get_label())
             line = [line for line in ax.lines if line.get_label()==self.label][0]
             ax.lines.remove(line)
-
+        del Series.obj_list[self.label]
+        del Ctrl_Row.control_rows[self.label]
             # ax.lines.remove(self.label)
         # self.master.master.fig.axes.lines.remove(self.label)
         # del self
@@ -196,6 +251,7 @@ class Ctrl_Row(GUI):
 class Series:
     obj_list = {}
     def __init__(self, path_to_csv):
+        # self.show = True
         self.show = True
         self.x = []
         self.y = []
