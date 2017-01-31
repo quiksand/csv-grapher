@@ -35,11 +35,7 @@ class GUI(tk.Frame):
         #                             text='Quit',
         #                             command=self._quit)
         # self.quit_button.pack()
-        self.open_button = ttk.Button(self,
-                                    text="Add file",
-                                    command=self.load_file)
-        # self.open_button.pack(side=tk.LEFT)
-        self.open_button.grid(row=6, column=1)
+
         self.add_plot_button = ttk.Button(self,
                                     text="Add plot",
                                     command=self.add_a_subplot)
@@ -95,10 +91,15 @@ class GUI(tk.Frame):
         self.adjust_subplots()
         #test list widget
 
-        self.test = tk.Frame(self)
+        self.leg_list = tk.Frame(self)
         self.add_all_list_items()
-        # self.test.pack(side=tk.RIGHT)
-        self.test.grid(row=0, column=5)
+        # self.leg_list.pack(side=tk.RIGHT)
+        self.leg_list.grid(row=0, column=5)
+        self.open_button = ttk.Button(self.leg_list,
+                                    text="Add file",
+                                    command=self.load_file)
+        self.open_button.pack()
+        # self.open_button.grid(row=6, column=1)
 
     def rescale_axes(self):
         self.xscale = self.xscale_box.get()
@@ -181,7 +182,7 @@ class GUI(tk.Frame):
                 self.plot_series(new_series)
                 self.add_list_item(new_series)
     def add_list_item(self, series):
-        Ctrl_Row(self.test, series)
+        Ctrl_Row(self.leg_list, series)
     def add_all_list_items(self):
         for series in Series.obj_list.values():
             self.add_list_item(series)
@@ -219,8 +220,8 @@ class Ctrl_Row(GUI):
                                     width=1,
                                     command=self.remove_series)
         self.close_button.grid(row=0, column=2)
-        # self.pack()
-        self.grid()
+        self.pack()
+        # self.grid()
         self.label = series.label
         Ctrl_Row.control_rows[series.label] = self
     #TODO Check this and all __del__() methods to make sure they are doing anything
