@@ -24,64 +24,53 @@ class GUI(tk.Frame):
         self.yscale = tk.StringVar()
         self.xscale.set(0.8)
         self.yscale.set(0.005)
-        #export button
+        self.testvar=tk.DoubleVar()
+
+        self.plot_controls_frame = tk.Frame(self)
+        self.graph_frame = tk.Frame(self)
+        self.toolbar_frame = tk.Frame(self)
+        self.legend_list_frame = tk.Frame(self)
+
+        # self.x_scale_lower = Entry(self)
+        self.x_scale_slider = ttk.Scale(self,
+                                    length=100,
+                                    var=self.testvar,
+                                    command=self.todo2)
         self.export_button = ttk.Button(self,
                                     text='Export CSV',
                                     command=self.export_csv)
-        # self.export_button.pack(side=tk.LEFT)
-        self.export_button.grid(row=6, column=0)
-        #quit button
-        # self.quit_button = ttk.Button(self,
-        #                             text='Quit',
-        #                             command=self._quit)
-        # self.quit_button.pack()
-
         self.add_plot_button = ttk.Button(self,
                                     text="Add plot",
                                     command=self.add_a_subplot)
-        # self.add_plot_button.pack(side=tk.LEFT)
-        self.add_plot_button.grid(row=6, column=2)
-        #button to remove a subplot from figure
         self.remove_plot_button = ttk.Button(self,
                                     text="Remove Plot",
                                     command=self.remove_a_subplot)
-        # self.remove_plot_button.pack(side=tk.LEFT)
-        self.remove_plot_button.grid(row=6, column=3)
-        self.xscale_label = ttk.Label(self, text='X:', width=9, anchor=tk.E)
-        self.xscale_label.grid(row=5, column=0)
+        self.xscale_label = ttk.Label(self,
+                                    text='X:',
+                                    width=9,
+                                    anchor=tk.E)
         self.xscale_box = ttk.Entry(self,
                                     width=9,
                                     textvariable=self.xscale)
-        # self.xscale_box.pack()
-        self.xscale_box.grid(row=5, column=1)
-        # self.xbtn = ttk.Button(self,
-        #                             text="Rescale X",
-        #                             command=self.rescale_axes)
-        # self.xbtn.pack()
-        self.yscale_label = ttk.Label(self, text='Y:', width=9, anchor=tk.E)
-        self.yscale_label.grid(row=5, column=3)
+        self.yscale_label = ttk.Label(self,
+                                    text='Y:',
+                                    width=9,
+                                    anchor=tk.E)
         self.yscale_box = ttk.Entry(self,
                                     width=9,
                                     textvariable=self.yscale)
-        # self.yscale_box.pack()
-        self.yscale_box.grid(row=5, column=4)
         self.resize_button = ttk.Button(self,
                                     text="Rescale",
                                     command=self.rescale_axes)
-        # self.resize_button.pack()
-        self.resize_button.grid(row=5, column=2)
-
         self.fig = plt.figure()
 
-        self.graph_frame = tk.Frame(self)
-        self.graph_frame.grid(row=0, column=0, columnspan=5, rowspan=5)
+
         # self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)
         self.canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
         # self.canvas.get_tk_widget().grid(row=0, column=0, columnspan=5, rowspan=5)
 
-        self.toolbar_frame = tk.Frame(self)
-        self.toolbar_frame.grid(row=7, column=0, columnspan=5, sticky=tk.W)
+
         # self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
         self.toolbar = NavigationToolbar2TkAgg(self.canvas, self.toolbar_frame)
         self.toolbar.update()
@@ -89,17 +78,30 @@ class GUI(tk.Frame):
         # self.canvas._tkcanvas.grid(row=3, column=0, columnspan=5)
 
         self.adjust_subplots()
-        #test list widget
-
-        self.leg_list = tk.Frame(self)
         self.add_all_list_items()
-        # self.leg_list.pack(side=tk.RIGHT)
-        self.leg_list.grid(row=0, column=5)
-        self.open_button = ttk.Button(self.leg_list,
+        self.open_button = ttk.Button(self.legend_list_frame,
                                     text="Add file",
                                     command=self.load_file)
+
+        tk.Grid.rowconfigure(self, 0, weight=1)
+        tk.Grid.columnconfigure(self, 0, weight=1)
         self.open_button.pack()
-        # self.open_button.grid(row=6, column=1)
+        self.graph_frame.grid(row=0, column=0, columnspan=5, rowspan=5)
+        self.legend_list_frame.grid(row=0, column=5)
+        self.plot_controls_frame.grid(row=5, column=0, columnspan=7)
+        # self.xscale_label.grid(row=5, column=0)
+        # self.xscale_box.grid(row=5, column=1)
+        # self.x_scale_slider.grid(row=5, column=2)
+        # self.resize_button.grid(row=5, column=5)
+        # self.yscale_label.grid(row=5, column=3)
+        # self.yscale_box.grid(row=5, column=4)
+        self.export_button.grid(row=6, column=0)
+        self.add_plot_button.grid(row=6, column=2)
+        self.remove_plot_button.grid(row=6, column=3)
+        self.toolbar_frame.grid(row=7, column=0, columnspan=5, sticky=tk.W)
+
+    def todo2(self, val):
+        print(val)
 
     def rescale_axes(self):
         self.xscale = self.xscale_box.get()
@@ -126,6 +128,7 @@ class GUI(tk.Frame):
     def adjust_subplots(self):
         self.fig.clear()
         for i, j in enumerate(self.subplot_layouts[self.no_of_subplots-1]):
+            Plot_Control_Row(self.plot_controls_frame, i)
             self.subplots[i] = self.fig.add_subplot(j)
             self.subplots[i].set_xlabel('Frequency (kHz)')
             self.subplots[i].set_ylabel('Amplitude (V)')
@@ -182,17 +185,114 @@ class GUI(tk.Frame):
                 self.plot_series(new_series)
                 self.add_list_item(new_series)
     def add_list_item(self, series):
-        Ctrl_Row(self.leg_list, series)
+        Series_Control_Row(self.legend_list_frame, series)
     def add_all_list_items(self):
         for series in Series.obj_list.values():
             self.add_list_item(series)
     #TODO: Change behavior so graphs are selectable
     #TODO: Change so graphs don't update with Series.obj_list after they have been "deleted"
-    def remove_list_item(self):
-        # del Ctrl_Row.control_rows[]
-        todo()
 
-class Ctrl_Row(GUI):
+class Plot_Control_Row(GUI):
+    plot_control_rows = {}
+    def __init__(self, master, subplot_index):
+        tk.Frame.__init__(self, master)
+        self.label = 'one'
+        self.subplot_index = subplot_index
+        self.x_lower_bound = tk.DoubleVar()
+        # self.x_lower_bound = tk.StringVar()
+        self.x_lower_bound.set(0)
+        self.x_upper_bound = tk.DoubleVar()
+        self.x_upper_bound.set(40)
+        self.xbar = tk.DoubleVar()
+        # self.xbar = tk.StringVar()
+        # self.xbar.set(40.0)
+        self.y_lower_bound = tk.DoubleVar()
+        self.y_lower_bound.set(0)
+        self.y_upper_bound = tk.DoubleVar()
+        self.y_upper_bound.set(0.004)
+        self.ybar = tk.DoubleVar()
+
+        # Row Label
+        self.plot_label = ttk.Label(self,
+                                    text = self.label + ': ',
+                                    anchor = tk.W)
+        # X Controls
+        self.x_scale_label = ttk.Label(self,
+                                    text = 'X: ',
+                                    width = 3,
+                                    anchor = tk.E)
+        self.x_scale_box_lower = ttk.Entry(self,
+                                    width = 5,
+                                    textvariable = self.x_lower_bound)
+        self.x_scale_slider = ttk.Scale(self,
+                                    length = 100,
+                                    from_ = 0.001,
+                                    var = self.xbar,
+                                    command = self.x_slider_moved)
+        self.x_scale_box_upper = ttk.Entry(self,
+                                    width = 5,
+                                    textvariable = self.x_upper_bound)
+        # Y Controls
+        self.y_scale_label = ttk.Label(self,
+                                    text = 'Y: ',
+                                    width = 3,
+                                    anchor = tk.E)
+        self.y_scale_box_lower = ttk.Entry(self,
+                                    width = 5,
+                                    textvariable = self.y_lower_bound)
+        self.y_scale_slider = ttk.Scale(self,
+                                    length = 100,
+                                    var = self.ybar,
+                                    command = self.todo2)
+        self.y_scale_box_upper = ttk.Entry(self,
+                                    width = 5,
+                                    textvariable = self.y_upper_bound)
+        # Resize Button
+        self.resize_button = ttk.Button(self,
+                                    text = 'Rescale',
+                                    command = self.update_x_bounds)
+
+        # Packing
+        self.plot_label.pack(side = tk.LEFT)
+        self.x_scale_label.pack(side = tk.LEFT)
+        self.x_scale_label.pack(side = tk.LEFT)
+        self.x_scale_box_lower.pack(side = tk.LEFT)
+        self.x_scale_box_lower.pack(side = tk.LEFT)
+        self.x_scale_slider.pack(side = tk.LEFT)
+        self.x_scale_box_upper.pack(side = tk.LEFT)
+        self.x_scale_box_upper.pack(side = tk.LEFT)
+        self.y_scale_label.pack(side = tk.LEFT)
+        self.y_scale_box_lower.pack(side = tk.LEFT)
+        self.y_scale_slider.pack(side = tk.LEFT)
+        self.y_scale_box_upper.pack(side = tk.LEFT)
+        self.resize_button.pack(side = tk.LEFT)
+        self.pack()
+
+        Plot_Control_Row.plot_control_rows[self.label] = self
+
+    def todo2(self, val):
+        print(val)
+    #TODO: Put some validation code in for the boxes
+    #TODO: Add in Y functionality
+    #TODO: Rethink the way the slider scales
+    def rescale_axes(self, a, b):
+        self.master.master.subplots[self.subplot_index].set_xlim(a, b)
+        self.master.master.canvas.show()
+    def update_x_bounds(self):
+        self.rescale_axes(self.x_lower_bound.get(), self.x_upper_bound.get())
+        # self.xbar.set(1)
+    def update_y_bounds(self):
+        self.rescale_axes(self.y_lower_bound.get(), self.y_upper_bound.get())
+        # self.ybar.set(1)
+    def x_slider_moved(self, val):
+        a = self.x_lower_bound.get()
+        b = self.x_upper_bound.get()
+        x = self.xbar.get()
+        b = a+x*(b-a)
+        self.rescale_axes(a, b)
+
+
+class Series_Control_Row(GUI):
     control_rows = {}
     def __init__(self, master, series):
         tk.Frame.__init__(self, master)
@@ -207,11 +307,8 @@ class Ctrl_Row(GUI):
                                     command=self.select_cursor)
         self.radio_btn.grid(row=0, column=0)
         self.checkbox = ttk.Checkbutton(self,
-                                    # onvalue=True,
-                                    # offvalue=False,
                                     width=25,
                                     variable=self.checkvar,
-                                    # variable=self.series.show,
                                     text=self.series.label,
                                     command=self.cb)
         self.checkbox.grid(row=0, column=1)
@@ -223,26 +320,19 @@ class Ctrl_Row(GUI):
         self.pack()
         # self.grid()
         self.label = series.label
-        Ctrl_Row.control_rows[series.label] = self
+        Series_Control_Row.control_rows[series.label] = self
     #TODO Check this and all __del__() methods to make sure they are doing anything
-    # def __del__(self):
-        # del Series.obj_list[self.label]
-        # del Ctrl_Row.control_rows[self.label]
     #TODO Make this update faster (play with artists)
     def cb(self):
         self.series.show = self.checkvar.get()
         self.master.master.adjust_subplots()
-
     #TODO Calling self.master.master... is probably a really dumb way to reach root window
     def remove_series(self):
         for ax in self.master.master.fig.axes:
             line = [line for line in ax.lines if line.get_label()==self.label][0]
             ax.lines.remove(line)
         del Series.obj_list[self.label]
-        del Ctrl_Row.control_rows[self.label]
-            # ax.lines.remove(self.label)
-        # self.master.master.fig.axes.lines.remove(self.label)
-        # del self
+        del Series_Control_Row.control_rows[self.label]
         self.master.master.canvas.show()
         self.destroy()
     def select_cursor(self):
@@ -252,7 +342,6 @@ class Ctrl_Row(GUI):
 class Series:
     obj_list = {}
     def __init__(self, path_to_csv):
-        # self.show = True
         self.show = True
         self.x = []
         self.y = []
@@ -260,7 +349,6 @@ class Series:
         self.csv_path = path_to_csv
         self.label = os.path.split(self.csv_path)[1].lower()[:-4]
         self.readin_csv()
-        # self.btn_row = SeriesList(self)
         # self.remove_title_rows()
         Series.obj_list[self.label] = self
     def readin_csv(self):
@@ -307,12 +395,10 @@ def main():
         if not check_path(csv_path):
             print("Error: File path does not exist or is not correct format")
             return 1
-        # create_graph(csv_path)
         Series(csv_path)
 
     #procedure if directory is given or file not specified
     else:
-        #open files in directory and save to graphs dict if correct format
         for f in os.listdir(args.dir):
             csv_path = os.path.abspath(os.path.join(args.dir, f))
             if check_path(csv_path):
