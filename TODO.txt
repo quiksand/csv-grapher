@@ -1,0 +1,41 @@
+Resizeable graph
+bind enter to rescale
+fix plot controller generation
+fix open and save dialog boxes so the save and filter right
+Add y Controls
+change default slider position on plot controls
+export to Excel
+
+toggle legend
+
+colored list items
+
+cursor that works
+check for doubling up of series names and prevent or fix
+strip headers from csv files that have them - warn with popup
+
+header row above list items
+
+add file button placed properly
+
+better layout margins
+
+place extraneous buttons better
+
+border around list items
+
+make default size whole gfraph
+
+reset button on graph
+
+
+Fix random crashes:
+
+Traceback (most recent call last):
+  File "csvcomp.py", line 415, in <module>
+    main()
+  File "csvcomp.py", line 411, in main
+    root.mainloop()
+  File "/usr/local/Cellar/python3/3.6.0/Frameworks/Python.framework/Versions/3.6/lib/python3.6/tkinter/__init__.py", line 1277, in mainloop
+    self.tk.mainloop(n)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte

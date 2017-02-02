@@ -17,6 +17,7 @@ class GUI(tk.Frame):
         tk.Frame.__init__(self, master)
         master.title("CSV Grapher")
         master.protocol('WM_DELETE_WINDOW', self._quit)
+        self.fig = plt.figure()
         self.no_of_subplots = 1
         self.subplot_layouts = [[111],[211,212],[211,223,224],[221,222,223,224]]
         self.subplots = [None]*self.no_of_subplots
@@ -38,6 +39,9 @@ class GUI(tk.Frame):
         #                             length=100,
         #                             var=self.testvar,
         #                             command=self.todo2)
+        self.open_button = ttk.Button(self.legend_list_frame,
+                                    text="Add file",
+                                    command=self.load_file)
         self.export_csv_button = ttk.Button(self.export_button_frame,
                                     text='Export CSV',
                                     command=self.export_csv)
@@ -50,24 +54,6 @@ class GUI(tk.Frame):
         self.remove_plot_button = ttk.Button(self,
                                     text="Remove Plot",
                                     command=self.remove_a_subplot)
-        # self.xscale_label = ttk.Label(self,
-        #                             text='X:',
-        #                             width=9,
-        #                             anchor=tk.E)
-        # self.xscale_box = ttk.Entry(self,
-        #                             width=9,
-        #                             textvariable=self.xscale)
-        # self.yscale_label = ttk.Label(self,
-        #                             text='Y:',
-        #                             width=9,
-        #                             anchor=tk.E)
-        # self.yscale_box = ttk.Entry(self,
-        #                             width=9,
-        #                             textvariable=self.yscale)
-        # self.resize_button = ttk.Button(self,
-        #                             text="Rescale",
-        #                             command=self.rescale_axes)
-        self.fig = plt.figure()
 
         # self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)
@@ -82,9 +68,6 @@ class GUI(tk.Frame):
 
         self.adjust_subplots()
         self.add_all_list_items()
-        self.open_button = ttk.Button(self.legend_list_frame,
-                                    text="Add file",
-                                    command=self.load_file)
 
         tk.Grid.rowconfigure(self, 0, weight=1)
         tk.Grid.columnconfigure(self, 0, weight=1)
@@ -95,13 +78,6 @@ class GUI(tk.Frame):
         self.legend_list_frame.grid(row=0, column=5)
         self.export_button_frame.grid(row=5, column=5)
         self.plot_controls_frame.grid(row=5, column=0, columnspan=5)
-        # self.xscale_label.grid(row=5, column=0)
-        # self.xscale_box.grid(row=5, column=1)
-        # self.x_scale_slider.grid(row=5, column=2)
-        # self.resize_button.grid(row=5, column=5)
-        # self.yscale_label.grid(row=5, column=3)
-        # self.yscale_box.grid(row=5, column=4)
-        # self.export_button.grid(row=6, column=0)
         self.add_plot_button.grid(row=6, column=2)
         self.remove_plot_button.grid(row=6, column=3)
         self.toolbar_frame.grid(row=7, column=0, columnspan=5, sticky=tk.W)
@@ -123,7 +99,6 @@ class GUI(tk.Frame):
     #     self.yscale_box.insert(0, self.yscale)
     def plot_series(self, series):
         for ax in self.fig.axes:
-            # if series.show:
             ax.plot(series.x, series.y, label=series.label)
             series.axes_index = len(ax.lines)
             self.legend = plt.legend()
@@ -131,10 +106,15 @@ class GUI(tk.Frame):
     def plot_multiple_series(self):
         for series in Series.obj_list.values():
             self.plot_series(series)
+    #FIXME
+    #Probably best to def manage_plot_controls function. This is getting tedious.
+    def insert_plot_control(self, index):
+        Plot_Control_Row(self.plot_controls_frame, index)
+    #/FIXME
     def adjust_subplots(self):
         self.fig.clear()
         for i, j in enumerate(self.subplot_layouts[self.no_of_subplots-1]):
-            Plot_Control_Row(self.plot_controls_frame, i)
+            # Plot_Control_Row(self.plot_controls_frame, i)
             self.subplots[i] = self.fig.add_subplot(j)
             self.subplots[i].set_xlabel('Frequency (kHz)')
             self.subplots[i].set_ylabel('Amplitude (V)')
@@ -142,16 +122,19 @@ class GUI(tk.Frame):
         self.plot_multiple_series()
         self.fig.tight_layout()
         self.canvas.show()
-        # self.canvas.draw()
     def add_a_subplot(self):
         if self.no_of_subplots < 4:
             self.no_of_subplots += 1
             self.subplots.append(None)
+            self.insert_plot_control(self.no_of_subplots-1)
         self.adjust_subplots()
     def remove_a_subplot(self):
         if self.no_of_subplots > 1:
             self.no_of_subplots -= 1
             del self.subplots[-1]
+            #FIXME
+            Plot_Control_Row.plot_control_rows['Plot {}'.format(self.no_of_subplots-1)].destroy()
+            #/FIXME
         self.adjust_subplots()
     def _quit(self):
         self.master.quit()
@@ -191,7 +174,9 @@ class GUI(tk.Frame):
         if fname:
                 new_series = Series(fname)
                 self.plot_series(new_series)
+                self.open_button.pack_forget()
                 self.add_list_item(new_series)
+                self.open_button.pack()
     def add_list_item(self, series):
         Series_Control_Row(self.legend_list_frame, series)
     def add_all_list_items(self):
@@ -201,10 +186,10 @@ class GUI(tk.Frame):
     #TODO: Change so graphs don't update with Series.obj_list after they have been "deleted"
 
 class Plot_Control_Row(GUI):
-    plot_control_rows = {}
+    plot_control_rows = []
     def __init__(self, master, subplot_index):
         tk.Frame.__init__(self, master)
-        self.label = 'one'
+        self.label = 'Plot {}'.format(subplot_index)
         self.subplot_index = subplot_index
         self.x_lower_bound = tk.DoubleVar()
         # self.x_lower_bound = tk.StringVar()
@@ -276,7 +261,7 @@ class Plot_Control_Row(GUI):
         self.resize_button.pack(side = tk.LEFT)
         self.pack()
 
-        Plot_Control_Row.plot_control_rows[self.label] = self
+        Plot_Control_Row.plot_control_rows.append(self)
 
     def todo2(self, val):
         print(val)
@@ -303,23 +288,22 @@ class Series_Control_Row(GUI):
     control_rows = {}
     def __init__(self, master, series):
         tk.Frame.__init__(self, master)
-        varb = tk.StringVar()
-        varb.set("1")
         self.var = tk.StringVar()
         self.var.set("1")
         self.checkvar = tk.BooleanVar()
         self.checkvar.set(1)
-        self.label = series.label
+        self.series = series
+        # self.label = series.label
         #fg=color option in tk items to change color
         self.radio_btn = ttk.Radiobutton(self,
                                     variable=self.master.master.radio_var,
-                                    value=self.label,
+                                    value=self.series.label,
                                     command=self.select_cursor)
         self.radio_btn.grid(row=0, column=0)
         self.checkbox = ttk.Checkbutton(self,
                                     width=25,
                                     variable=self.checkvar,
-                                    text=self.label,
+                                    text=self.series.label,
                                     command=self.show_or_hide_line)
         self.checkbox.grid(row=0, column=1)
         self.close_button = ttk.Button(self,
@@ -328,34 +312,28 @@ class Series_Control_Row(GUI):
                                     command=self.remove_series)
         self.close_button.grid(row=0, column=2)
         self.pack()
-        Series_Control_Row.control_rows[self.label] = self
-    #TODO Check this and all __del__() methods to make sure they are doing anything
-    #TODO Make this update faster (play with artists)
-    def get_line(self):
-        for ax in self.master.master.fig.axes:
-            line = [line for line in ax.lines if line.get_label()==self.label][0]
-            print('line')
+        Series_Control_Row.control_rows[self.series.label] = self
+    def get_line(self, ax):
+        line = [line for line in ax.lines if line.get_label()==self.series.label][0]
         return line
     def show_or_hide_line(self):
-        # for ax in self.master.master.fig.axes:
-        #     line = [line for line in ax.lines if line.get_label()==self.label][0]
-        #     line.set_visible(self.checkvar.get())
-        #     self.master.master.canvas.show()
-        self.get_line().set_visible(self.checkvar.get())
+        for ax in self.master.master.fig.axes:
+            self.get_line(ax).set_visible(self.checkvar.get())
+        self.series.show = self.checkvar.get()
         self.master.master.canvas.show()
-        # self.series.artist.set_visible(self.checkvar.get())
-        # self.series.show = self.checkvar.get()
-        # self.master.master.adjust_subplots()
+
     #TODO Calling self.master.master... is probably a really dumb way to reach root window
     def remove_series(self):
         for ax in self.master.master.fig.axes:
-            line = [line for line in ax.lines if line.get_label()==self.label][0]
-            ax.lines.remove(line)
-        del Series.obj_list[self.label]
-        del Series_Control_Row.control_rows[self.label]
+            ax.lines.remove(self.get_line(ax))
+        del Series.obj_list[self.series.label]
+        del Series_Control_Row.control_rows[self.series.label]
         self.master.master.canvas.show()
         self.destroy()
+        # print(Series_Control_Row.control_rows.keys())
+        # print(Series.obj_list.keys())
     def select_cursor(self):
+        print(self.master.master.radio_var.get())
         todo()
 
 #Series object stores information about the series to be graphed
@@ -378,17 +356,11 @@ class Series:
                 self.x.append(row[0])
                 self.y.append(row[1])
     def remove_title_rows(self):
-        print("TODO: Remove title rows from csvs that have them")
-    # def __del__(self):
-    #     del Series.obj_list[self.label]
+        todo()
     def __str__(self):
         return self.csv_path
     def get_attr(self):
         print(self.label, self.csv_path, self.show)
-    def show(self):
-        self.show = True
-    def hide(self):
-        self.show = False
 
 def todo():
     print('TODO')
