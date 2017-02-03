@@ -5,7 +5,7 @@ fix open and save dialog boxes so the save and filter right
 Add y Controls
 change default slider position on plot controls
 export to Excel
-
+Make utf encoding explicit?
 toggle legend
 
 colored list items
@@ -27,6 +27,17 @@ border around list items
 make default size whole gfraph
 
 reset button on graph
+
+
+Bugs:
+All graphs are the same
+
+
+
+
+
+
+
 
 
 Fix random crashes:

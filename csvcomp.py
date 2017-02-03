@@ -55,6 +55,12 @@ class GUI(tk.Frame):
                                     text="Remove Plot",
                                     command=self.remove_a_subplot)
 
+        self.test_button = ttk.Button(self.export_button_frame,
+                                    text='Test Button',
+                                    command=self.read_in_csv)
+        self.test_button_2 = ttk.Button(self.export_button_frame,
+                                    text='Test Button 2',
+                                    command=self.todo3)
         # self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)
         self.canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
@@ -74,6 +80,8 @@ class GUI(tk.Frame):
         self.open_button.pack(side=tk.TOP)
         self.export_csv_button.pack()
         self.export_excel_button.pack()
+        self.test_button.pack()
+        self.test_button_2.pack()
         self.graph_frame.grid(row=0, column=0, columnspan=5, rowspan=5)
         self.legend_list_frame.grid(row=0, column=5)
         self.export_button_frame.grid(row=5, column=5)
@@ -84,7 +92,32 @@ class GUI(tk.Frame):
 
     def todo2(self, val):
         print(val)
+    def todo3(self):
+        for series in Series.obj_list.values():
+            print('\n')
+            print(series.label)
+            print(series.x[5])
+            print(series.y[5])
+            print('\n')
+    def read_in_csv(self, path_to_csv):
+        rows = []
+        cols = []
+        new_series = []
+        with open(path_to_csv, newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                rows.append(row)
+        for i in range(len(rows[0])):
+            cols.append([col[i] for col in rows])
 
+        for i in range(1,len(cols)):
+            new_series.append(Series(path_to_csv, cols[0], cols[i]))
+        for series in new_series:
+            print(len(series.x), len(series.y))
+        return new_series
+
+    #             self.x.append(row[0])
+    #             self.y.append(row[1])
     # def rescale_axes(self):
     #     # self.xscale = self.xscale_box.get()
     #     # self.yscale = self.yscale_box.get()
@@ -98,9 +131,10 @@ class GUI(tk.Frame):
     #     self.xscale_box.insert(0, self.xscale)
     #     self.yscale_box.insert(0, self.yscale)
     def plot_series(self, series):
+        series.axes_index = []
         for ax in self.fig.axes:
             ax.plot(series.x, series.y, label=series.label)
-            series.axes_index = len(ax.lines)
+            series.axes_index.append(len(ax.lines))
             self.legend = plt.legend()
         self.canvas.show()
     def plot_multiple_series(self):
@@ -168,15 +202,17 @@ class GUI(tk.Frame):
         with open(of, 'w', newline='') as newcsv:
             writer = csv.writer(newcsv)
             writer.writerows(rows)
+    #TODO: Make this logic better -
     def load_file(self):
         fname = tk.filedialog.askopenfilename(filetypes=(("Csv files", "*.csv"),
             ("All files", "*.*")))
         if fname:
-                new_series = Series(fname)
-                self.plot_series(new_series)
-                self.open_button.pack_forget()
-                self.add_list_item(new_series)
-                self.open_button.pack()
+            # self.open_button.pack_forget()
+            new_series = self.read_in_csv(fname)
+            for series in new_series:
+                self.plot_series(series)
+                self.add_list_item(series)
+            # self.open_button.pack()
     def add_list_item(self, series):
         Series_Control_Row(self.legend_list_frame, series)
     def add_all_list_items(self):
@@ -339,24 +375,56 @@ class Series_Control_Row(GUI):
 #Series object stores information about the series to be graphed
 class Series:
     obj_list = {}
-    def __init__(self, path_to_csv):
+    def __init__(self, path_to_csv, x=None, y=None):
+        if x is None:
+            x=[]
+            y=[]
         self.show = True
-        self.x = []
-        self.y = []
+        self.titles = []
+        self.x = x
+        self.y = y
         self.axes_index = [None]*4
         self.csv_path = path_to_csv
         self.label = os.path.split(self.csv_path)[1].lower()[:-4]
-        self.readin_csv()
-        # self.remove_title_rows()
+        if self.x == []:
+            self.read_in_csv()
+            return None
+        self.remove_title_rows()
+        self.x_range = [min(self.x), max(self.x)]
+        self.y_range = [min(self.y), max(self.y)]
+        self.peak_index = self.x.index(max(self.x))
         Series.obj_list[self.label] = self
-    def readin_csv(self):
+    # def read_in_csv(self):
+    #     with open(self.csv_path, newline='') as csvfile:
+    #         reader = csv.reader(csvfile)
+    #         for row in reader:
+    #             self.x.append(row[0])
+    #             self.y.append(row[1])
+    def read_in_csv(self):
+        rows = []
+        cols = []
+        new_series = []
         with open(self.csv_path, newline='') as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
-                self.x.append(row[0])
-                self.y.append(row[1])
+                rows.append(row)
+        for i in range(len(rows[0])):
+            cols.append([col[i] for col in rows])
+        for i in range(1,len(cols)):
+            new_series.append(Series(self.csv_path, cols[0], cols[i]))
+        return new_series
+    def is_number(self, s):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
     def remove_title_rows(self):
-        todo()
+        if not self.is_number(self.x[0]):
+            self.titles.append(self.x.pop(0))
+            self.titles.append(self.y.pop(0))
+            print('removed title row')
+            self.remove_title_rows()
     def __str__(self):
         return self.csv_path
     def get_attr(self):
