@@ -27,7 +27,7 @@ border around list items
 make default size whole gfraph
 
 reset button on graph
-
+smooth graphing
 
 Bugs:
 All graphs are the same

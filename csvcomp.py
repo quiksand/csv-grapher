@@ -14,6 +14,33 @@ from tkinter import filedialog
 #TODO Rearrange widgets to make more sense in layout
 class GUI(tk.Frame):
     def __init__(self, master):
+        #TODO: Abstract this out to somewhere
+        #argument parsing
+        parser = argparse.ArgumentParser(description='Plots one or more .csv files')
+        parser.add_argument('-f', dest='f', required=False,
+            help='Specify path to a csv file to graph')
+        parser.add_argument('-d', dest='dir', default='./', required=False,
+            help='Specify a directory of csv files to graph')
+        parser.add_argument('-o', dest='of', default='../CombinedCSV.csv', required=False,
+            help='Specify an output filename to condense all csv files into one')
+        args = parser.parse_args()
+        #procedure if file is specified
+        if args.f:
+            csv_path = os.path.abspath(args.f)
+            if not check_path(csv_path):
+                print("Error: File path does not exist or is not correct format")
+                return 1
+            # Series(csv_path)
+            self.read_in_csv(csv_path)
+
+        #procedure if directory is given or file not specified
+        else:
+            for f in os.listdir(args.dir):
+                csv_path = os.path.abspath(os.path.join(args.dir, f))
+                if check_path(csv_path):
+                    # Series(csv_path)
+                    self.read_in_csv(csv_path)
+
         tk.Frame.__init__(self, master)
         master.title("CSV Grapher")
         master.protocol('WM_DELETE_WINDOW', self._quit)
@@ -57,7 +84,7 @@ class GUI(tk.Frame):
 
         self.test_button = ttk.Button(self.export_button_frame,
                                     text='Test Button',
-                                    command=self.read_in_csv)
+                                    command=self.todo3)
         self.test_button_2 = ttk.Button(self.export_button_frame,
                                     text='Test Button 2',
                                     command=self.todo3)
@@ -93,11 +120,11 @@ class GUI(tk.Frame):
     def todo2(self, val):
         print(val)
     def todo3(self):
+        Series.obj_list['delete'].x.pop()
         for series in Series.obj_list.values():
             print('\n')
             print(series.label)
-            print(series.x[5])
-            print(series.y[5])
+            print(len(series.x), len(series.y))
             print('\n')
     def read_in_csv(self, path_to_csv):
         rows = []
@@ -109,11 +136,18 @@ class GUI(tk.Frame):
                 rows.append(row)
         for i in range(len(rows[0])):
             cols.append([col[i] for col in rows])
-
+        if len(cols) < 2:
+            print('ERROR - Nothing to graph in csv')
+            return new_series
         for i in range(1,len(cols)):
-            new_series.append(Series(path_to_csv, cols[0], cols[i]))
-        for series in new_series:
-            print(len(series.x), len(series.y))
+            label = os.path.split(path_to_csv)[1].lower()[:-4]
+            if len(cols) > 2:
+                label = label + ' - Series {}'.format(i)
+            new_series.append(Series(cols[0], cols[i], path_to_csv, label))
+            print('added series: ' + label)
+            print(len(cols[0]), len(cols[i]))
+        # for series in new_series:
+        #     print(len(series.x), len(series.y))
         return new_series
 
     #             self.x.append(row[0])
@@ -375,44 +409,46 @@ class Series_Control_Row(GUI):
 #Series object stores information about the series to be graphed
 class Series:
     obj_list = {}
-    def __init__(self, path_to_csv, x=None, y=None):
-        if x is None:
-            x=[]
-            y=[]
+    def __init__(self, x, y, path_to_csv, label=None):
+    # def __init__(self, path_to_csv, x=None, y=None):
+        # if x is None:
+        #     x=[]
+        #     y=[]
         self.show = True
-        self.titles = []
+        self.titles = [[]*2]
         self.x = x
         self.y = y
         self.axes_index = [None]*4
         self.csv_path = path_to_csv
-        self.label = os.path.split(self.csv_path)[1].lower()[:-4]
-        if self.x == []:
-            self.read_in_csv()
-            return None
+        self.label = label
+        if self.label is None:
+            self.label = os.path.split(self.csv_path)[1].lower()[:-4]
+        # if self.x == []:
+        #     self.read_in_csv()
+        #     return None
         self.remove_title_rows()
+        if self.titles:
+            self.label = self.label + self.title[1]
         self.x_range = [min(self.x), max(self.x)]
         self.y_range = [min(self.y), max(self.y)]
         self.peak_index = self.x.index(max(self.x))
+        if self.label in Series.obj_list.keys():
+            self.label = self.label + ' (1)'
+            print('TODO: Add copy numbering')
         Series.obj_list[self.label] = self
     # def read_in_csv(self):
+    #     rows = []
+    #     cols = []
+    #     new_series = []
     #     with open(self.csv_path, newline='') as csvfile:
     #         reader = csv.reader(csvfile)
     #         for row in reader:
-    #             self.x.append(row[0])
-    #             self.y.append(row[1])
-    def read_in_csv(self):
-        rows = []
-        cols = []
-        new_series = []
-        with open(self.csv_path, newline='') as csvfile:
-            reader = csv.reader(csvfile)
-            for row in reader:
-                rows.append(row)
-        for i in range(len(rows[0])):
-            cols.append([col[i] for col in rows])
-        for i in range(1,len(cols)):
-            new_series.append(Series(self.csv_path, cols[0], cols[i]))
-        return new_series
+    #             rows.append(row)
+    #     for i in range(len(rows[0])):
+    #         cols.append([col[i] for col in rows])
+    #     for i in range(1,len(cols)):
+    #         new_series.append(Series(self.csv_path, cols[0], cols[i]))
+    #     return new_series
     def is_number(self, s):
         try:
             float(s)
@@ -420,10 +456,18 @@ class Series:
         except ValueError:
             return False
     def remove_title_rows(self):
+#
+# my_list = ["Hello", "world"]
+# print "-".join(my_list)
+
+
         if not self.is_number(self.x[0]):
-            self.titles.append(self.x.pop(0))
-            self.titles.append(self.y.pop(0))
+            self.titles[0].append(self.x[0])
+            self.titles[1].append(self.y[0])
+            self.x = self.x[1:]
+            self.y = self.y[1:]
             print('removed title row')
+            #TODO: add multi-level titles
             self.remove_title_rows()
     def __str__(self):
         return self.csv_path
@@ -438,31 +482,31 @@ def check_path(csv_path):
     return os.path.isfile(csv_path) and csv_path.lower().endswith(".csv")
 
 def main():
-    #TODO: Abstract this out to somewhere
-    #argument parsing
-    parser = argparse.ArgumentParser(description='Plots one or more .csv files')
-    parser.add_argument('-f', dest='f', required=False,
-        help='Specify path to a csv file to graph')
-    parser.add_argument('-d', dest='dir', default='./', required=False,
-        help='Specify a directory of csv files to graph')
-    parser.add_argument('-o', dest='of', default='../CombinedCSV.csv', required=False,
-        help='Specify an output filename to condense all csv files into one')
-    args = parser.parse_args()
+    # #TODO: Abstract this out to somewhere
+    # #argument parsing
+    # parser = argparse.ArgumentParser(description='Plots one or more .csv files')
+    # parser.add_argument('-f', dest='f', required=False,
+    #     help='Specify path to a csv file to graph')
+    # parser.add_argument('-d', dest='dir', default='./', required=False,
+    #     help='Specify a directory of csv files to graph')
+    # parser.add_argument('-o', dest='of', default='../CombinedCSV.csv', required=False,
+    #     help='Specify an output filename to condense all csv files into one')
+    # args = parser.parse_args()
 
-    #procedure if file is specified
-    if args.f:
-        csv_path = os.path.abspath(args.f)
-        if not check_path(csv_path):
-            print("Error: File path does not exist or is not correct format")
-            return 1
-        Series(csv_path)
-
-    #procedure if directory is given or file not specified
-    else:
-        for f in os.listdir(args.dir):
-            csv_path = os.path.abspath(os.path.join(args.dir, f))
-            if check_path(csv_path):
-                Series(csv_path)
+    # #procedure if file is specified
+    # if args.f:
+    #     csv_path = os.path.abspath(args.f)
+    #     if not check_path(csv_path):
+    #         print("Error: File path does not exist or is not correct format")
+    #         return 1
+    #     Series(csv_path)
+    #
+    # #procedure if directory is given or file not specified
+    # else:
+    #     for f in os.listdir(args.dir):
+    #         csv_path = os.path.abspath(os.path.join(args.dir, f))
+    #         if check_path(csv_path):
+    #             Series(csv_path)
 
     root = tk.Tk()
     app = GUI(root)
