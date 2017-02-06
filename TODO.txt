@@ -28,11 +28,9 @@ make default size whole gfraph
 
 reset button on graph
 smooth graphing
+edit button/fields for series and axis titles
 
-Bugs:
-All graphs are the same
-
-
+remove plots from legend when deleted
 
 
 
