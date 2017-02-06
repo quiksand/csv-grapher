@@ -53,11 +53,11 @@ class GUI(tk.Frame):
         self.testvar=tk.DoubleVar()
         self.radio_var = tk.StringVar()
 
-        self.plot_controls_frame = tk.Frame(self)
+        self.plot_controls_frame = tk.Frame(self, bg="black", bd=1)
         self.graph_frame = tk.Frame(self)
         self.toolbar_frame = tk.Frame(self)
-        self.legend_list_frame = tk.Frame(self)
-        self.export_button_frame = tk.Frame(self)
+        self.legend_list_frame = tk.Frame(self, bg="black", bd=1)
+        self.export_button_frame = tk.Frame(self, bg="black", bd=1)
 
         self.open_button = ttk.Button(self,
                                     text="Add file",
@@ -88,8 +88,10 @@ class GUI(tk.Frame):
         # self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
         self.toolbar = NavigationToolbar2TkAgg(self.canvas, self.toolbar_frame)
         self.toolbar.update()
-        self.canvas._tkcanvas.pack(side=tk.LEFT, fill=tk.Y, expand=0)
+        self.canvas._tkcanvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
         # self.canvas._tkcanvas.grid(row=3, column=0, columnspan=5)
+
+        header_bar = Series_Control_Row_Title_Bar(self.legend_list_frame)
 
         self.adjust_subplots()
         self.add_all_list_items()
@@ -97,12 +99,12 @@ class GUI(tk.Frame):
         tk.Grid.rowconfigure(self, 0, weight=1)
         tk.Grid.columnconfigure(self, 0, weight=1)
         self.open_button.grid(row=5, column=5)
-        self.export_csv_button.pack()
-        self.export_excel_button.pack()
-        self.test_button.pack()
-        self.test_button_2.pack()
-        self.graph_frame.grid(row=0, column=0, columnspan=5, rowspan=5)
-        self.legend_list_frame.grid(row=0, column=5)
+        self.export_csv_button.grid(sticky=tk.E+tk.W)
+        self.export_excel_button.grid(sticky=tk.E+tk.W)
+        self.test_button.grid(sticky=tk.E+tk.W)
+        self.test_button_2.grid(sticky=tk.E+tk.W)
+        self.graph_frame.grid(row=0, column=0, columnspan=5, rowspan=5, sticky=tk.N+tk.E+tk.W+tk.S)
+        self.legend_list_frame.grid(row=1, column=5, rowspan=4, padx=10, pady=10, sticky=tk.N+tk.S)
         self.export_button_frame.grid(row=6, column=5)
         self.plot_controls_frame.grid(row=5, column=0, columnspan=5)
         self.add_plot_button.grid(row=6, column=2)
@@ -142,6 +144,7 @@ class GUI(tk.Frame):
         for ax in self.fig.axes:
             ax.plot(series.x, series.y, label=series.label)
             series.axes_index.append(len(ax.lines))
+            #FIXME: legend sometimes causes a warning to be issued.
             self.legend = plt.legend()
         self.canvas.show()
     def plot_multiple_series(self):
@@ -227,6 +230,7 @@ class Plot_Control_Row(GUI):
     plot_control_rows = {}
     def __init__(self, master, subplot_index):
         tk.Frame.__init__(self, master)
+        self.configure(bd=1)
         self.subplot_index = subplot_index
         self.label = 'Plot {}'.format(self.subplot_index+1)
         self.x_lower_bound = tk.DoubleVar()
@@ -274,58 +278,108 @@ class Plot_Control_Row(GUI):
         self.y_scale_slider = ttk.Scale(self,
                                     length = 100,
                                     var = self.ybar,
-                                    command = self.todo2)
+                                    command = self.y_slider_moved)
         self.y_scale_box_upper = ttk.Entry(self,
                                     width = 5,
                                     textvariable = self.y_upper_bound)
         # Resize Button
         self.resize_button = ttk.Button(self,
                                     text = 'Rescale',
-                                    command = self.update_x_bounds)
+                                    command = self.update_bounds)
 
         # Packing
-        self.plot_label.pack(side = tk.LEFT)
-        self.x_scale_label.pack(side = tk.LEFT)
-        self.x_scale_label.pack(side = tk.LEFT)
-        self.x_scale_box_lower.pack(side = tk.LEFT)
-        self.x_scale_box_lower.pack(side = tk.LEFT)
-        self.x_scale_slider.pack(side = tk.LEFT)
-        self.x_scale_box_upper.pack(side = tk.LEFT)
-        self.x_scale_box_upper.pack(side = tk.LEFT)
-        self.y_scale_label.pack(side = tk.LEFT)
-        self.y_scale_box_lower.pack(side = tk.LEFT)
-        self.y_scale_slider.pack(side = tk.LEFT)
-        self.y_scale_box_upper.pack(side = tk.LEFT)
-        self.resize_button.pack(side = tk.LEFT)
-        self.pack()
+        # self.plot_label.pack(side = tk.LEFT)
+        self.plot_label.grid(row=0, column=0, sticky=tk.N+tk.S)
+        self.x_scale_label.grid(row=0, column=1, sticky=tk.N+tk.S)
+        self.x_scale_label.grid(row=0, column=2, sticky=tk.N+tk.S)
+        self.x_scale_box_lower.grid(row=0, column=3, sticky=tk.N+tk.S)
+        self.x_scale_box_lower.grid(row=0, column=4, sticky=tk.N+tk.S)
+        self.x_scale_slider.grid(row=0, column=5, sticky=tk.N+tk.S)
+        self.x_scale_box_upper.grid(row=0, column=6, sticky=tk.N+tk.S)
+        self.x_scale_box_upper.grid(row=0, column=7, sticky=tk.N+tk.S)
+        self.y_scale_label.grid(row=0, column=8, sticky=tk.N+tk.S)
+        self.y_scale_box_lower.grid(row=0, column=9, sticky=tk.N+tk.S)
+        self.y_scale_slider.grid(row=0, column=10, sticky=tk.N+tk.S)
+        self.y_scale_box_upper.grid(row=0, column=11, sticky=tk.N+tk.S)
+        self.resize_button.grid(row=0, column=12, sticky=tk.N+tk.S)
+        self.grid(sticky=tk.E+tk.W)
 
-        Plot_Control_Row.plot_control_rows[self.subplot_index]= self
+        Plot_Control_Row.plot_control_rows[self.subplot_index] = self
 
     def todo2(self, val):
         print(val)
     #TODO: Put some validation code in for the boxes
-    #TODO: Add in Y functionality
     #TODO: Rethink the way the slider scales
-    def rescale_axes(self, a, b):
+    def rescale_x_axes(self, a, b):
         self.master.master.subplots[self.subplot_index].set_xlim(a, b)
         self.master.master.canvas.show()
-    def update_x_bounds(self):
-        self.rescale_axes(self.x_lower_bound.get(), self.x_upper_bound.get())
+    def rescale_y_axes(self, a, b):
+        self.master.master.subplots[self.subplot_index].set_ylim(a, b)
+        self.master.master.canvas.show()
+    def update_bounds(self):
+        self.rescale_x_axes(self.x_lower_bound.get(), self.x_upper_bound.get())
+        self.rescale_y_axes(self.y_lower_bound.get(), self.y_upper_bound.get())
         # self.xbar.set(1)
-    def update_y_bounds(self):
-        self.rescale_axes(self.y_lower_bound.get(), self.y_upper_bound.get())
+    # def update_y_bounds(self):
+    #     self.rescale_axes(self.y_lower_bound.get(), self.y_upper_bound.get())
         # self.ybar.set(1)
     def x_slider_moved(self, val):
         a = self.x_lower_bound.get()
         b = self.x_upper_bound.get()
         x = self.xbar.get()
         b = a+x*(b-a)
-        self.rescale_axes(a, b)
+        self.rescale_x_axes(a, b)
+    def y_slider_moved(self, val):
+        a = self.y_lower_bound.get()
+        b = self.y_upper_bound.get()
+        y = self.ybar.get()
+        b = a+y*(b-a)
+        self.rescale_y_axes(a, b)
+
+class Series_Control_Row_Title_Bar(GUI):
+    header = None
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+        self.config(bg="black", bd=1)
+        self.checkvar1 = tk.BooleanVar()
+        self.checkvar1.set(0)
+        self.checkvar2 = tk.BooleanVar()
+        self.checkvar2.set(1)
+        self.cursor_checkbox = ttk.Checkbutton(self,
+                                    variable=self.checkvar1,
+                                    command=self.show_or_hide_cursor)
+        self.show_hide_checkbox = ttk.Checkbutton(self,
+                                    variable=self.checkvar2,
+                                    command=self.show_or_hide_all)
+        self.series_header_label = ttk.Label(self,
+                                    anchor=tk.CENTER,
+                                    text = 'Series',
+                                    width = 25)
+        self.series_edit_label = ttk.Label(self,
+                                    anchor=tk.CENTER,
+                                    text = 'Edit')
+        self.series_remove_label = ttk.Label(self,
+                                    anchor=tk.CENTER,
+                                    text = 'Remove')
+        self.cursor_checkbox.grid(row=0, column=0, sticky=tk.N+tk.S)
+        self.show_hide_checkbox.grid(row=0, column=1, sticky=tk.N+tk.S)
+        self.series_header_label.grid(row=0, column=2, sticky=tk.N+tk.S)
+        self.series_edit_label.grid(row=0, column=3, sticky=tk.N+tk.S)
+        self.series_remove_label.grid(row=0, column=4, sticky=tk.N+tk.S)
+        self.grid(sticky=tk.E+tk.W)
+        Series_Control_Row_Title_Bar.header = self
+    def show_or_hide_cursor(self):
+        todo()
+    def show_or_hide_all(self):
+        for row in Series_Control_Row.control_rows.values():
+            if row.checkvar.get() != self.checkvar2.get():
+                row.checkbox.invoke()
 
 class Series_Control_Row(GUI):
     control_rows = {}
     def __init__(self, master, series):
         tk.Frame.__init__(self, master)
+        self.configure(bd=1)
         self.var = tk.StringVar()
         self.var.set("1")
         self.checkvar = tk.BooleanVar()
@@ -337,24 +391,28 @@ class Series_Control_Row(GUI):
                                     variable=self.master.master.radio_var,
                                     value=self.series.label,
                                     command=self.select_cursor)
-        self.radio_btn.grid(row=0, column=0)
         self.checkbox = ttk.Checkbutton(self,
-                                    width=25,
+                                    # width=25,
                                     variable=self.checkvar,
-                                    text=self.series.label,
+                                    # text=self.series.label,
                                     command=self.show_or_hide_line)
-        self.checkbox.grid(row=0, column=1)
+        self.series_label = ttk.Label(self,
+                                    width=25,
+                                    text=self.series.label)
         self.edit_button = ttk.Button(self,
                                     text="...",
                                     width=1,
                                     command=todo)
-        self.edit_button.grid(row=0, column=2)
         self.close_button = ttk.Button(self,
                                     text="X",
                                     width=1,
                                     command=self.remove_series)
-        self.close_button.grid(row=0, column=3)
-        self.pack()
+        self.radio_btn.grid(row=0, column=0, sticky=tk.N+tk.S)
+        self.checkbox.grid(row=0, column=1, sticky=tk.N+tk.S)
+        self.series_label.grid(row=0, column=2, sticky=tk.N+tk.S)
+        self.edit_button.grid(row=0, column=3, sticky=tk.N+tk.S)
+        self.close_button.grid(row=0, column=4, sticky=tk.N+tk.S)
+        self.grid()
         Series_Control_Row.control_rows[self.series.label] = self
     def get_line(self, ax):
         line = [line for line in ax.lines if line.get_label()==self.series.label][0]
@@ -383,8 +441,6 @@ class Series_Control_Row(GUI):
 class Series:
     obj_list = {}
     def __init__(self, x, y, path_to_csv, label=None):
-        print('TODO: Add copy numbering')
-        print('TODO: clean up labeling')
         self.show = True
         self.x_title = []
         self.y_title = []
@@ -406,6 +462,7 @@ class Series:
             self.label = self.label + " - " + self.y_title[0]
         self.label = self.label.title()
         if self.label in Series.obj_list.keys():
+            print('TODO: Add copy numbering')
             self.label = self.label + ' (1)'
         Series.obj_list[self.label] = self
     def is_number(self, s):

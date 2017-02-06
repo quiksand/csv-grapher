@@ -32,7 +32,7 @@ edit button/fields for series and axis titles
 
 remove plots from legend when deleted
 
-
+create template config file
 
 
 
