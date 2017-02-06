@@ -10,6 +10,38 @@ from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
+import numpy as np
+
+class SnaptoCursor(object):
+    """
+    Like Cursor but the crosshair snaps to the nearest x,y point
+    For simplicity, I'm assuming x is sorted
+    """
+
+    def __init__(self, ax, x, y):
+        self.ax = ax
+        # self.lx = ax.axhline(color='k')  # the horiz line
+        self.ly = ax.axvline(color='k')  # the vert line
+        self.x = x
+        self.y = y
+        # text location in axes coords
+        self.txt = ax.text(0.7, 0.9, '', transform=ax.transAxes)
+
+    def mouse_move(self, event):
+        if not event.inaxes:
+            return
+        x, y = event.xdata, event.ydata
+
+        indx = np.searchsorted(self.x, [x])[0]
+        x = self.x[indx]
+        y = self.y[indx]
+        # update the line positions
+        # self.lx.set_ydata(y)
+        self.ly.set_xdata(x)
+
+        self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
+        print('x=%1.2f, y=%1.2f' % (x, y))
+        plt.draw()
 
 #TODO Rearrange widgets to make more sense in layout
 class GUI(tk.Frame):
@@ -95,6 +127,11 @@ class GUI(tk.Frame):
 
         self.adjust_subplots()
         self.add_all_list_items()
+
+        #
+        # cursor = SnaptoCursor(self.subplots[0], Series.obj_list['Delete'].x, Series.obj_list['Delete'].y)
+        # plt.connect('motion_notify_event', cursor.mouse_move)
+
 
         tk.Grid.rowconfigure(self, 0, weight=1)
         tk.Grid.columnconfigure(self, 0, weight=1)
