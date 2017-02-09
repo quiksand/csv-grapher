@@ -151,12 +151,11 @@ class GUI(tk.Frame):
     def todo2(self, val):
         print(val)
     def todo3(self):
-        Series.obj_list['delete'].x.pop()
-        for series in Series.obj_list.values():
-            print('\n')
-            print(series.label)
-            print(len(series.x), len(series.y))
-            print('\n')
+        for ax in self.fig.axes:
+            handles, labels = ax.get_legend_handles_labels()
+            print(handles, labels)
+            self.legend = plt.legend()
+
     def read_in_csv(self, path_to_csv):
         rows = []
         cols = []
@@ -176,13 +175,19 @@ class GUI(tk.Frame):
                 label = label + ' - Series {}'.format(i)
             new_series.append(Series(cols[0], cols[i], path_to_csv, label))
         return new_series
+    def get_line(self, series, ax):
+        line = [line for line in ax.lines if line.get_label()==series.label][0]
+        return line
     def plot_series(self, series):
         series.axes_index = []
         for ax in self.fig.axes:
             ax.plot(series.x, series.y, label=series.label)
             series.axes_index.append(len(ax.lines))
-            #FIXME: legend sometimes causes a warning to be issued.
-            self.legend = plt.legend()
+        #FIXME: legend sometimes causes a warning to be issued.
+        self.legend = plt.legend()
+        self.canvas.show()
+        for ax in self.fig.axes:
+            self.get_line(series, ax).set_visible(series.show)
         self.canvas.show()
     def plot_multiple_series(self):
         for series in Series.obj_list.values():
@@ -193,6 +198,8 @@ class GUI(tk.Frame):
         self.fig.clear()
         for i, j in enumerate(self.subplot_layouts[self.no_of_subplots-1]):
             if i not in Plot_Control_Row.plot_control_rows.keys():
+                print('SOMEHTING')
+
                 self.insert_plot_control(i)
             self.subplots[i] = self.fig.add_subplot(j)
             self.subplots[i].set_xlabel(self.xlabel[i])
@@ -206,10 +213,14 @@ class GUI(tk.Frame):
             self.no_of_subplots += 1
             self.subplots.append(None)
         self.adjust_subplots()
+
     def remove_a_subplot(self):
         if self.no_of_subplots > 1:
             del self.subplots[-1]
+            print(Plot_Control_Row.plot_control_rows)
             Plot_Control_Row.plot_control_rows[self.no_of_subplots-1].destroy()
+            # del Plot_Control_Row.plot_control_rows[self.no_of_subplots-1]
+            print(Plot_Control_Row.plot_control_rows)
             self.no_of_subplots -= 1
         self.adjust_subplots()
     def _quit(self):
@@ -221,7 +232,7 @@ class GUI(tk.Frame):
         #TODO: Simplify, possibly remove extra call to write_csv
         #TODO: Grey out button if no plots are in Series.obj_list
         fname = tk.filedialog.asksaveasfilename(filetypes=(("csv", "*.csv"),
-            ("All files", "*.*") ))
+            ("All files", "*.*") ), defaultextension=".csv", initialfile="CombinedCSV.csv")
         if fname:
             self.write_csv(fname)
     def write_csv(self, of):
@@ -246,14 +257,15 @@ class GUI(tk.Frame):
             writer.writerows(rows)
     #TODO: Make this logic better -
     def load_file(self):
-        fname = tk.filedialog.askopenfilename(filetypes=(("Csv files", "*.csv"),
-            ("All files", "*.*")))
-        if fname:
+        f_names = tk.filedialog.askopenfilename(filetypes=(("Csv files", "*.csv"),
+            ("All files", "*.*")), multiple=True, )
+        if f_names:
             # self.open_button.pack_forget()
-            new_series = self.read_in_csv(fname)
-            for series in new_series:
-                self.plot_series(series)
-                self.add_list_item(series)
+            for each_file in f_names:
+                new_series = self.read_in_csv(each_file)
+                for series in new_series:
+                    self.plot_series(series)
+                    self.add_list_item(series)
             # self.open_button.pack()
     def add_list_item(self, series):
         Series_Control_Row(self.legend_list_frame, series)
@@ -261,7 +273,6 @@ class GUI(tk.Frame):
         for series in Series.obj_list.values():
             self.add_list_item(series)
     #TODO: Change behavior so graphs are selectable
-    #TODO: Change so graphs don't update with Series.obj_list after they have been "deleted"
 
 class Plot_Control_Row(GUI):
     plot_control_rows = {}
@@ -459,7 +470,6 @@ class Series_Control_Row(GUI):
             self.get_line(ax).set_visible(self.checkvar.get())
         self.series.show = self.checkvar.get()
         self.master.master.canvas.show()
-
     #TODO Calling self.master.master... is probably a really dumb way to reach root window
     def remove_series(self):
         for ax in self.master.master.fig.axes:
