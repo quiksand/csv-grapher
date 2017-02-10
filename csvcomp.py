@@ -152,9 +152,11 @@ class GUI(tk.Frame):
         print(val)
     def todo3(self):
         for ax in self.fig.axes:
-            handles, labels = ax.get_legend_handles_labels()
-            print(handles, labels)
+            # handles, labels = ax.get_legend_handles_labels()
+            # print(handles, labels)
             self.legend = plt.legend()
+            self.canvas.show()
+
 
     def read_in_csv(self, path_to_csv):
         rows = []
@@ -198,8 +200,6 @@ class GUI(tk.Frame):
         self.fig.clear()
         for i, j in enumerate(self.subplot_layouts[self.no_of_subplots-1]):
             if i not in Plot_Control_Row.plot_control_rows.keys():
-                print('SOMEHTING')
-
                 self.insert_plot_control(i)
             self.subplots[i] = self.fig.add_subplot(j)
             self.subplots[i].set_xlabel(self.xlabel[i])
@@ -213,14 +213,11 @@ class GUI(tk.Frame):
             self.no_of_subplots += 1
             self.subplots.append(None)
         self.adjust_subplots()
-
     def remove_a_subplot(self):
         if self.no_of_subplots > 1:
             del self.subplots[-1]
-            print(Plot_Control_Row.plot_control_rows)
             Plot_Control_Row.plot_control_rows[self.no_of_subplots-1].destroy()
-            # del Plot_Control_Row.plot_control_rows[self.no_of_subplots-1]
-            print(Plot_Control_Row.plot_control_rows)
+            del Plot_Control_Row.plot_control_rows[self.no_of_subplots-1]
             self.no_of_subplots -= 1
         self.adjust_subplots()
     def _quit(self):
@@ -423,6 +420,18 @@ class Series_Control_Row_Title_Bar(GUI):
             if row.checkvar.get() != self.checkvar2.get():
                 row.checkbox.invoke()
 
+class Edit_Series_Window(tk.Toplevel):
+    no_instance = True
+    def __init__(self, master, series):
+        Edit_Series_Window.no_instance = False
+        tk.Toplevel.__init__(self, master)
+        self.series = series
+        self.title('Edit Series')
+        self.blah = ttk.Label(master=self, text='Put something Here!!')
+        self.blah.pack(fill=tk.BOTH, expand=1)
+    def __del__(self):
+        Edit_Series_Window.no_instance = True
+
 class Series_Control_Row(GUI):
     control_rows = {}
     def __init__(self, master, series):
@@ -450,7 +459,7 @@ class Series_Control_Row(GUI):
         self.edit_button = ttk.Button(self,
                                     text="...",
                                     width=1,
-                                    command=todo)
+                                    command=self.open_edit_window)
         self.close_button = ttk.Button(self,
                                     text="X",
                                     width=1,
@@ -462,6 +471,9 @@ class Series_Control_Row(GUI):
         self.close_button.grid(row=0, column=4, sticky=tk.N+tk.S)
         self.grid()
         Series_Control_Row.control_rows[self.series.label] = self
+    def open_edit_window(self):
+        if Edit_Series_Window.no_instance:
+            Edit_Series_Window(self, self.series)
     def get_line(self, ax):
         line = [line for line in ax.lines if line.get_label()==self.series.label][0]
         return line

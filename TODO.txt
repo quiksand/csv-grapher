@@ -1,8 +1,15 @@
+Toggle legend button
+Show/Hide on multiple plots
+
+
+
+
+
+
+
 Resizeable graph
 bind enter to rescale
 fix plot controller generation
-fix open and save dialog boxes so the save and filter right
-Add y Controls
 change default slider position on plot controls
 export to Excel
 Make utf encoding explicit?
@@ -34,7 +41,6 @@ remove plots from legend when deleted
 
 create template config file
 
-BUG: Add plot doesn't add a plot control after removing a plot
 
 BUG: If a plot is added/removed after a series has been unchecked, plots correctly, but legend all fucked up.
 
