@@ -18,7 +18,8 @@ class SnaptoCursor(object):
     For simplicity, I'm assuming x is sorted
     """
 
-    def __init__(self, ax, x, y):
+    def __init__(self, master, ax, x, y):
+        self.master = master
         self.ax = ax
         # self.lx = ax.axhline(color='k')  # the horiz line
 
@@ -57,7 +58,7 @@ class SnaptoCursor(object):
 
         # self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
         # print('x=%1.2f, y=%1.2f' % (x, y))
-        plt.draw()
+        self.master.canvas.show()
 
 #TODO Rearrange widgets to make more sense in layout
 class GUI(tk.Frame):
@@ -145,7 +146,7 @@ class GUI(tk.Frame):
         self.add_all_list_items()
 
         print(self.subplots[0])
-        self.cursor = SnaptoCursor(self.subplots[0], Series.obj_list['Delete'].x, Series.obj_list['Delete'].y)
+        self.cursor = SnaptoCursor(self, self.subplots[0], Series.obj_list['Delete'].x, Series.obj_list['Delete'].y)
         self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
 
 
