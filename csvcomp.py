@@ -21,26 +21,42 @@ class SnaptoCursor(object):
     def __init__(self, ax, x, y):
         self.ax = ax
         # self.lx = ax.axhline(color='k')  # the horiz line
+
         self.ly = ax.axvline(color='k')  # the vert line
-        self.x = x
+        self.x = np.array(x)
         self.y = y
+        print(self.x[150:200])
         # text location in axes coords
-        self.txt = ax.text(0.7, 0.9, '', transform=ax.transAxes)
+        # self.txt = ax.text(0.7, 0.9, '', transform=ax.transAxes)
 
     def mouse_move(self, event):
         if not event.inaxes:
+            print('mouse not moving in axes')
             return
+        print('mouse moving')
         x, y = event.xdata, event.ydata
+        # indx = 5
+        # print(type(x))
+        # print(type(self.x[5]))
+        # indx = bisect.bisect_left(self.x, [x])
+        # indx = np.searchsorted(self.x, x)
+        # print(np.searchsorted(self.x, [x]))
+        # indx = np.where(self.x > x)
+        # print(x, indx)
+        # x = self.x[indx]
+        # y = self.y[indx]
 
         indx = np.searchsorted(self.x, [x])[0]
+        print(np.searchsorted(self.x, [x]))
         x = self.x[indx]
         y = self.y[indx]
+        # print(indx, x)
         # update the line positions
         # self.lx.set_ydata(y)
         self.ly.set_xdata(x)
 
-        self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
-        print('x=%1.2f, y=%1.2f' % (x, y))
+        # self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
+        # print('x=%1.2f, y=%1.2f' % (x, y))
         plt.draw()
 
 #TODO Rearrange widgets to make more sense in layout
@@ -128,9 +144,9 @@ class GUI(tk.Frame):
         self.adjust_subplots()
         self.add_all_list_items()
 
-        #
-        # cursor = SnaptoCursor(self.subplots[0], Series.obj_list['Delete'].x, Series.obj_list['Delete'].y)
-        # plt.connect('motion_notify_event', cursor.mouse_move)
+        print(self.subplots[0])
+        self.cursor = SnaptoCursor(self.subplots[0], Series.obj_list['Delete'].x, Series.obj_list['Delete'].y)
+        self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
 
 
         tk.Grid.rowconfigure(self, 0, weight=1)
@@ -154,6 +170,8 @@ class GUI(tk.Frame):
         for ax in self.fig.axes:
             # handles, labels = ax.get_legend_handles_labels()
             # print(handles, labels)
+            for series in Series.obj_list.values():
+                print(type(series.x[5]))
             self.legend = plt.legend()
             self.canvas.show()
 
@@ -508,6 +526,8 @@ class Series:
         self.axes_index = [None]*4
         self.csv_path = path_to_csv
         self.remove_title_rows()
+        self.x = [float(x) for x in self.x]
+        self.y = [float(y) for y in self.y]
         self.x_range = [min(self.x), max(self.x)]
         self.y_range = [min(self.y), max(self.y)]
         self.peak_index = self.x.index(max(self.x))
