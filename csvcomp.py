@@ -14,51 +14,30 @@ import numpy as np
 
 class SnaptoCursor(object):
     """
-    Like Cursor but the crosshair snaps to the nearest x,y point
-    For simplicity, I'm assuming x is sorted
+    Code credit: Matplotlib.org documentation.
     """
-
     def __init__(self, master, ax, x, y):
         self.master = master
         self.ax = ax
-        # self.lx = ax.axhline(color='k')  # the horiz line
-
-        self.ly = ax.axvline(color='k')  # the vert line
+        self.ly = ax.axvline(color='k', picker=1)  # the vert line
         self.x = np.array(x)
         self.y = y
-        print(self.x[150:200])
-        # text location in axes coords
-        # self.txt = ax.text(0.7, 0.9, '', transform=ax.transAxes)
-
     def mouse_move(self, event):
         if not event.inaxes:
-            print('mouse not moving in axes')
             return
-        print('mouse moving')
-        x, y = event.xdata, event.ydata
-        # indx = 5
-        # print(type(x))
-        # print(type(self.x[5]))
-        # indx = bisect.bisect_left(self.x, [x])
-        # indx = np.searchsorted(self.x, x)
-        # print(np.searchsorted(self.x, [x]))
-        # indx = np.where(self.x > x)
-        # print(x, indx)
-        # x = self.x[indx]
-        # y = self.y[indx]
 
+        print('mouse moving')
+        x = event.xdata
         indx = np.searchsorted(self.x, [x])[0]
-        print(np.searchsorted(self.x, [x]))
+        # print(np.searchsorted(self.x, [x]))
         x = self.x[indx]
         y = self.y[indx]
-        # print(indx, x)
-        # update the line positions
-        # self.lx.set_ydata(y)
+        print(x, y)
         self.ly.set_xdata(x)
-
-        # self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
-        # print('x=%1.2f, y=%1.2f' % (x, y))
         self.master.canvas.show()
+    def mouse_pick(self, event):
+        line = event.artist
+        print('PICKED {}'.format(line))
 
 #TODO Rearrange widgets to make more sense in layout
 class GUI(tk.Frame):
@@ -125,10 +104,10 @@ class GUI(tk.Frame):
                                     command=self.remove_a_subplot)
         self.test_button = ttk.Button(self.export_button_frame,
                                     text='Test Button',
-                                    command=self.todo3)
+                                    command=self.todo5)
         self.test_button_2 = ttk.Button(self.export_button_frame,
                                     text='Test Button 2',
-                                    command=self.todo3)
+                                    command=self.todo6)
         # self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)
         self.canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
@@ -145,9 +124,10 @@ class GUI(tk.Frame):
         self.adjust_subplots()
         self.add_all_list_items()
 
-        print(self.subplots[0])
         self.cursor = SnaptoCursor(self, self.subplots[0], Series.obj_list['Delete'].x, Series.obj_list['Delete'].y)
-        self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
+        # self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
+        self.cid2 = self.canvas.mpl_connect('pick_event', self.cursor.mouse_pick)
+        cid = self.canvas.mpl_connect('pick_event', self.on_pick)
 
 
         tk.Grid.rowconfigure(self, 0, weight=1)
@@ -169,13 +149,23 @@ class GUI(tk.Frame):
         print(val)
     def todo3(self):
         for ax in self.fig.axes:
-            # handles, labels = ax.get_legend_handles_labels()
-            # print(handles, labels)
-            for series in Series.obj_list.values():
-                print(type(series.x[5]))
             self.legend = plt.legend()
             self.canvas.show()
-
+    def todo4(self):
+        # self.fig.axes[0].scatter(Series.obj_list['Delete'].x,Series.obj_list['Delete'].y, label = Series.obj_list['Delete'].label)
+        self.fig.axes[0].scatter(Series.obj_list['Delete'].artists[0])
+        self.canvas.show()
+    def on_pick(self, event):
+        line = event.artist
+        xdata, ydata = line.get_data()
+        ind = event.ind
+        print('on pick line:', line)
+    def todo5(self):
+        self.fig.axes[0].grid(True)
+        self.canvas.show()
+    def todo6(self):
+        self.fig.axes[0].grid(False)
+        self.canvas.show()
 
     def read_in_csv(self, path_to_csv):
         rows = []
@@ -200,29 +190,34 @@ class GUI(tk.Frame):
         line = [line for line in ax.lines if line.get_label()==series.label][0]
         return line
     def plot_series(self, series):
-        series.axes_index = []
+        # series.axes_index = []
+        series.artists = []
         for ax in self.fig.axes:
-            ax.plot(series.x, series.y, label=series.label)
-            series.axes_index.append(len(ax.lines))
+            if series.plot_type == 'scatter':
+                art = ax.scatter(series.x, series.y, label=series.label, picker=1)
+            else:
+                [art] = ax.plot(series.x, series.y, label=series.label, picker=1)
+            series.artists.append(art)
         #FIXME: legend sometimes causes a warning to be issued.
         self.legend = plt.legend()
         self.canvas.show()
-        for ax in self.fig.axes:
-            self.get_line(series, ax).set_visible(series.show)
+        for artist in series.artists:
+            artist.set_visible(series.show)
         self.canvas.show()
     def plot_multiple_series(self):
         for series in Series.obj_list.values():
             self.plot_series(series)
-    def insert_plot_control(self, index):
-        Plot_Control_Row(self.plot_controls_frame, index)
+    def insert_plot_control(self, index, axes):
+        Plot_Control_Row(self.plot_controls_frame, index, axes)
     def adjust_subplots(self):
         self.fig.clear()
         for i, j in enumerate(self.subplot_layouts[self.no_of_subplots-1]):
-            if i not in Plot_Control_Row.plot_control_rows.keys():
-                self.insert_plot_control(i)
             self.subplots[i] = self.fig.add_subplot(j)
+            if i not in Plot_Control_Row.plot_control_rows.keys():
+                self.insert_plot_control(i, self.subplots[i])
             self.subplots[i].set_xlabel(self.xlabel[i])
             self.subplots[i].set_ylabel(self.ylabel[i])
+            self.subplots[i].grid(Plot_Control_Row.plot_control_rows[i].grid_var.get())
         # self.rescale_axes()
         self.plot_multiple_series()
         self.fig.tight_layout()
@@ -292,16 +287,20 @@ class GUI(tk.Frame):
 
 class Plot_Control_Row(GUI):
     plot_control_rows = {}
-    def __init__(self, master, subplot_index):
+    def __init__(self, master, subplot_index, axes):
         tk.Frame.__init__(self, master)
+        self.axes = axes
+        print(self.axes)
         self.configure(bd=1)
         self.subplot_index = subplot_index
         self.label = 'Plot {}'.format(self.subplot_index+1)
+        self.grid_var = tk.BooleanVar()
+        self.grid_var.set(0)
         self.x_lower_bound = tk.DoubleVar()
         # self.x_lower_bound = tk.StringVar()
         self.x_lower_bound.set(0)
         self.x_upper_bound = tk.DoubleVar()
-        self.x_upper_bound.set(40)
+        self.x_upper_bound.set(1)
         self.xbar = tk.DoubleVar()
         # self.xbar = tk.StringVar()
         # self.xbar.set(40.0)
@@ -346,6 +345,11 @@ class Plot_Control_Row(GUI):
         self.y_scale_box_upper = ttk.Entry(self,
                                     width = 5,
                                     textvariable = self.y_upper_bound)
+        # Grid Checkbox
+        self.grid_checkbox = ttk.Checkbutton(self,
+                                    variable=self.grid_var,
+                                    text='Grid',
+                                    command=self.show_or_hide_grid)
         # Resize Button
         self.resize_button = ttk.Button(self,
                                     text = 'Rescale',
@@ -365,7 +369,8 @@ class Plot_Control_Row(GUI):
         self.y_scale_box_lower.grid(row=0, column=9, sticky=tk.N+tk.S)
         self.y_scale_slider.grid(row=0, column=10, sticky=tk.N+tk.S)
         self.y_scale_box_upper.grid(row=0, column=11, sticky=tk.N+tk.S)
-        self.resize_button.grid(row=0, column=12, sticky=tk.N+tk.S)
+        self.grid_checkbox.grid(row=0, column=12, sticky=tk.N+tk.S)
+        self.resize_button.grid(row=0, column=13, sticky=tk.N+tk.S)
         self.grid(sticky=tk.E+tk.W)
 
         Plot_Control_Row.plot_control_rows[self.subplot_index] = self
@@ -374,6 +379,9 @@ class Plot_Control_Row(GUI):
         print(val)
     #TODO: Put some validation code in for the boxes
     #TODO: Rethink the way the slider scales
+    def show_or_hide_grid(self):
+        self.master.master.subplots[self.subplot_index].grid(self.grid_var.get())
+        self.master.master.canvas.show()
     def rescale_x_axes(self, a, b):
         self.master.master.subplots[self.subplot_index].set_xlim(a, b)
         self.master.master.canvas.show()
@@ -493,24 +501,33 @@ class Series_Control_Row(GUI):
     def open_edit_window(self):
         if Edit_Series_Window.no_instance:
             Edit_Series_Window(self, self.series)
+    def get_scatter(self, ax):
+        scatter = [scatter for scatter in ax.collections if scatter.get_label()==self.series.label][0]
+        return scatter
     def get_line(self, ax):
         line = [line for line in ax.lines if line.get_label()==self.series.label][0]
         return line
     def show_or_hide_line(self):
-        for ax in self.master.master.fig.axes:
-            self.get_line(ax).set_visible(self.checkvar.get())
+        for artist in self.series.artists:
+            artist.set_visible(self.checkvar.get())
+        # for ax in self.master.master.fig.axes:
+        #     self.get_line(ax).set_visible(self.checkvar.get())
         self.series.show = self.checkvar.get()
+        self.master.master.legend = plt.legend()
         self.master.master.canvas.show()
     #TODO Calling self.master.master... is probably a really dumb way to reach root window
     def remove_series(self):
         for ax in self.master.master.fig.axes:
-            ax.lines.remove(self.get_line(ax))
+            if self.series.plot_type == 'scatter':
+                ax.collections.remove(self.get_scatter(ax))
+            else:
+                ax.lines.remove(self.get_line(ax))
         del Series.obj_list[self.series.label]
         del Series_Control_Row.control_rows[self.series.label]
+        del self.series
+        self.master.master.legend = plt.legend()
         self.master.master.canvas.show()
         self.destroy()
-        # print(Series_Control_Row.control_rows.keys())
-        # print(Series.obj_list.keys())
     def select_cursor(self):
         print(self.master.master.radio_var.get())
         todo()
@@ -524,7 +541,9 @@ class Series:
         self.y_title = []
         self.x = x
         self.y = y
-        self.axes_index = [None]*4
+        self.plot_type = 'line'
+        self.artists = []
+        # self.axes_index = [None]*4
         self.csv_path = path_to_csv
         self.remove_title_rows()
         self.x = [float(x) for x in self.x]
