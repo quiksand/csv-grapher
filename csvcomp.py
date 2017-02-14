@@ -7,26 +7,52 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
+from matplotlib.backends.backend_tkagg import cursors
+import matplotlib.backends.backend_tkagg as tkagg
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 import numpy as np
 
+class OnHover(object):
+    """
+    Thanks to Joe Kington
+    https://stackoverflow.com/questions/27888663/set-hand-cursor-for-picking-matplotlib-text
+    (Also it currently doesn't work for this app)
+    """
+    def __init__(self, artist, cursor='coffee_mug'):
+        self.artist = artist
+        self.cursor = cursor
+        self.default_cursor = tkagg.cursord[1]
+        self.fig = artist.ax.figure
+
+    def __call__(self, event):
+        inside, _ = self.artist.contains(event)
+        if inside:
+            tkagg.cursord[1] = self.cursor
+        else:
+            tkagg.cursord[1] = self.default_cursor
+        self.fig.canvas.toolbar.set_cursor(1)
+
 class SnaptoCursor(object):
     """
     Code credit: Matplotlib.org documentation.
     """
-    def __init__(self, master, ax, x, y):
+    def __init__(self, master, axes, x, y):
         self.master = master
-        self.ax = ax
-        self.ly = ax.axvline(color='k', picker=1)  # the vert line
+        self.axes = axes
+        self.ly = axes.axvline(color='k', picker=1)  # the vert line
         self.x = np.array(x)
         self.y = y
+
     def mouse_move(self, event):
         if not event.inaxes:
             return
-
+        # self.cid2 = self.master.canvas.mpl_connect('button_press_event', self.click)
+        if event.button != 1:
+            return
         print('mouse moving')
+        self.click()
         x = event.xdata
         indx = np.searchsorted(self.x, [x])[0]
         # print(np.searchsorted(self.x, [x]))
@@ -35,6 +61,9 @@ class SnaptoCursor(object):
         print(x, y)
         self.ly.set_xdata(x)
         self.master.canvas.show()
+    def click(self):
+        print('click!!!')
+
     def mouse_pick(self, event):
         line = event.artist
         print('PICKED {}'.format(line))
@@ -107,7 +136,7 @@ class GUI(tk.Frame):
                                     command=self.todo5)
         self.test_button_2 = ttk.Button(self.export_button_frame,
                                     text='Test Button 2',
-                                    command=self.todo6)
+                                    command=self.misc)
         # self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)
         self.canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
@@ -125,10 +154,16 @@ class GUI(tk.Frame):
         self.add_all_list_items()
 
         self.cursor = SnaptoCursor(self, self.subplots[0], Series.obj_list['Delete'].x, Series.obj_list['Delete'].y)
-        # self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
+        self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
         self.cid2 = self.canvas.mpl_connect('pick_event', self.cursor.mouse_pick)
-        cid = self.canvas.mpl_connect('pick_event', self.on_pick)
-
+        cid3 = self.canvas.mpl_connect('pick_event', self.on_pick)
+        # cid4 = self.canvas.mpl_connect('motion_notify_event', self.canvas.onHilite)
+        # tkagg.cursord[cursors.POINTER] = 'sb_h_double_arrow'
+        # text = self.fig.axes[0].text(0.5, 0.5, 'TEST', ha='center', va='center', size=25)
+        # print()
+        # print(text.axes.figure)
+        # cid4 = self.canvas.mpl_connect('motion_notify_event', OnHover(self.cursor))
+        # cid4 = self.canvas.mpl_connect('motion_notify_event', OnHover(self.canvas))
 
         tk.Grid.rowconfigure(self, 0, weight=1)
         tk.Grid.columnconfigure(self, 0, weight=1)
@@ -145,6 +180,10 @@ class GUI(tk.Frame):
         self.remove_plot_button.grid(row=6, column=3)
         self.toolbar_frame.grid(row=7, column=0, columnspan=5, sticky=tk.W)
 
+    def misc(self):
+        # tkagg.cursord[1] = 'coffee_mug'
+        # self.canvas.set_cursor(1)
+        self.graph_frame.configure(cursor='sizing')
     def todo2(self, val):
         print(val)
     def todo3(self):
@@ -164,8 +203,9 @@ class GUI(tk.Frame):
         self.fig.axes[0].grid(True)
         self.canvas.show()
     def todo6(self):
-        self.fig.axes[0].grid(False)
-        self.canvas.show()
+        # self.fig.axes[0].grid(False)
+        # self.canvas.show()
+        print(Series.obj_list['Delete'].artists[0].axes.figure)
 
     def read_in_csv(self, path_to_csv):
         rows = []
@@ -207,14 +247,14 @@ class GUI(tk.Frame):
     def plot_multiple_series(self):
         for series in Series.obj_list.values():
             self.plot_series(series)
-    def insert_plot_control(self, index, axes):
-        Plot_Control_Row(self.plot_controls_frame, index, axes)
+    def insert_plot_control(self, index):
+        Plot_Control_Row(self.plot_controls_frame, index)
     def adjust_subplots(self):
         self.fig.clear()
         for i, j in enumerate(self.subplot_layouts[self.no_of_subplots-1]):
             self.subplots[i] = self.fig.add_subplot(j)
             if i not in Plot_Control_Row.plot_control_rows.keys():
-                self.insert_plot_control(i, self.subplots[i])
+                self.insert_plot_control(i)
             self.subplots[i].set_xlabel(self.xlabel[i])
             self.subplots[i].set_ylabel(self.ylabel[i])
             self.subplots[i].grid(Plot_Control_Row.plot_control_rows[i].grid_var.get())
@@ -287,10 +327,8 @@ class GUI(tk.Frame):
 
 class Plot_Control_Row(GUI):
     plot_control_rows = {}
-    def __init__(self, master, subplot_index, axes):
+    def __init__(self, master, subplot_index):
         tk.Frame.__init__(self, master)
-        self.axes = axes
-        print(self.axes)
         self.configure(bd=1)
         self.subplot_index = subplot_index
         self.label = 'Plot {}'.format(self.subplot_index+1)
@@ -379,14 +417,18 @@ class Plot_Control_Row(GUI):
         print(val)
     #TODO: Put some validation code in for the boxes
     #TODO: Rethink the way the slider scales
+    # def update_axes(self, axes):
+    #     self.axes = axes
     def show_or_hide_grid(self):
         self.master.master.subplots[self.subplot_index].grid(self.grid_var.get())
         self.master.master.canvas.show()
     def rescale_x_axes(self, a, b):
         self.master.master.subplots[self.subplot_index].set_xlim(a, b)
+        # self.axes.set_xlim(a, b)
         self.master.master.canvas.show()
     def rescale_y_axes(self, a, b):
         self.master.master.subplots[self.subplot_index].set_ylim(a, b)
+        # self.axes.set_ylim(a, b)
         self.master.master.canvas.show()
     def update_bounds(self):
         self.rescale_x_axes(self.x_lower_bound.get(), self.x_upper_bound.get())
@@ -515,7 +557,7 @@ class Series_Control_Row(GUI):
         self.series.show = self.checkvar.get()
         self.master.master.legend = plt.legend()
         self.master.master.canvas.show()
-    #TODO Calling self.master.master... is probably a really dumb way to reach root window
+    #FIXME Calling self.master.master... is probably a really dumb way to reach root window
     def remove_series(self):
         for ax in self.master.master.fig.axes:
             if self.series.plot_type == 'scatter':

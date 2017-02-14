@@ -3,7 +3,8 @@ Show/Hide on multiple plots
 
 
 
-
+helpful hint: apparently artists contain references to their axes and figure
+so line.axes.figure will actually return something helpful. Would have been nice to k now this earlier.
 
 
 
