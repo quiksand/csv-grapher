@@ -1,3 +1,50 @@
+#
+# class SnaptoCursor(object):
+#     """
+#     Code credit: Matplotlib.org documentation.
+#     """
+#     #TODO Make this take a series instead of x and y. For versatility...
+#     def __init__(self, master, fig, series):
+#         self.master = master
+#         self.axes = fig.axes
+#         self.series = series
+#         self.x = np.array(series.x)
+#         self.y = np.array(series.y)
+#         self.ly = self.axes[0].axvline(color='k', picker=1)  # the vert line
+#         x_temp = self.x[series.peak_index]
+#         y_temp = self.y[series.peak_index]
+#         [self.data_point] = self.axes[0].plot([x_temp], [y_temp], marker='o', markersize=5, color="red")
+#         self.ly.set_xdata(x_temp)
+#         self.text = self.axes[0].text(x_temp, y_temp, '({}, {})'.format(x_temp, y_temp))
+#     def mouse_move(self, event):
+#         if not event.inaxes:
+#             return
+#         if event.button != 1:
+#             return
+#         self.click()
+#         x = event.xdata
+#         index = np.searchsorted(self.x, [x])[0]
+#         x = self.x[index]
+#         y = self.y[index]
+#         print(x, y)
+#         self.data_point.set_xdata(x)
+#         self.data_point.set_ydata(y)
+#         self.ly.set_xdata(x)
+#         self.text.remove()
+#         s = '({}, {})'.format(x, y)
+#         self.text = self.axes[0].text(x, y, s)
+#         self.master.canvas.show()
+#     def click(self):
+#         print('click!!!')
+#     def mouse_pick(self, event):
+#         line = event.artist
+#         print('PICKED {}'.format(line))
+#
+#
+
+
+
+
 import csv
 import argparse
 import os
@@ -14,59 +61,86 @@ from tkinter import ttk
 from tkinter import filedialog
 import numpy as np
 
-class OnHover(object):
-    """
-    Thanks to Joe Kington
-    https://stackoverflow.com/questions/27888663/set-hand-cursor-for-picking-matplotlib-text
-    (Also it currently doesn't work for this app)
-    """
-    def __init__(self, artist, cursor='coffee_mug'):
-        self.artist = artist
-        self.cursor = cursor
-        self.default_cursor = tkagg.cursord[1]
-        self.fig = artist.ax.figure
+# class OnHover(object):
+#     """
+#     Thanks to Joe Kington
+#     https://stackoverflow.com/questions/27888663/set-hand-cursor-for-picking-matplotlib-text
+#     (Also it currently doesn't work for this app)
+#     """
+#     def __init__(self, artist, cursor='coffee_mug'):
+#         self.artist = artist
+#         self.cursor = cursor
+#         self.default_cursor = tkagg.cursord[1]
+#         self.fig = artist.ax.figure
+#
+#     def __call__(self, event):
+#         inside, _ = self.artist.contains(event)
+#         if inside:
+#             tkagg.cursord[1] = self.cursor
+#         else:
+#             tkagg.cursord[1] = self.default_cursor
+#         self.fig.canvas.toolbar.set_cursor(1)
 
-    def __call__(self, event):
-        inside, _ = self.artist.contains(event)
-        if inside:
-            tkagg.cursord[1] = self.cursor
-        else:
-            tkagg.cursord[1] = self.default_cursor
-        self.fig.canvas.toolbar.set_cursor(1)
 
 class SnaptoCursor(object):
     """
     Code credit: Matplotlib.org documentation.
     """
-    def __init__(self, master, axes, x, y):
+    cursors = {}
+    def __init__(self, master, series=None):
         self.master = master
-        self.axes = axes
-        self.ly = axes.axvline(color='k', picker=1)  # the vert line
-        self.x = np.array(x)
-        self.y = y
-
+        self.axes = self.master.fig.axes
+        self.series = series
+        self.x = np.array(series.x)
+        self.y = np.array(series.y)
+        self.vert_line = self.axes[0].axvline(color='k', picker=1)  # the vert line
+        x_start = self.x[series.peak_index]
+        y_start = self.y[series.peak_index]
+        self.data_point = self.axes[0].plot([x_start], [y_start], marker='o', markersize=5, color="red")[0]
+        self.vert_line.set_xdata(x_start)
+        self.text = self.axes[0].text(x_start, y_start, '({}, {})'.format(x_start, y_start))
+        SnaptoCursor.cursors[self.series.label] = self
     def mouse_move(self, event):
         if not event.inaxes:
             return
-        # self.cid2 = self.master.canvas.mpl_connect('button_press_event', self.click)
         if event.button != 1:
             return
-        print('mouse moving')
-        self.click()
+        # self.click()
         x = event.xdata
-        indx = np.searchsorted(self.x, [x])[0]
-        # print(np.searchsorted(self.x, [x]))
-        x = self.x[indx]
-        y = self.y[indx]
-        print(x, y)
-        self.ly.set_xdata(x)
+        index = np.searchsorted(self.x, [x])[0]
+        x = self.x[index]
+        y = self.y[index]
+        # print(x, y)
+        self.data_point.set_xdata(x)
+        self.data_point.set_ydata(y)
+        self.vert_line.set_xdata(x)
+        self.text.remove()
+        s = '({}, {})'.format(x, y)
+        self.text = self.axes[0].text(x, y, s)
         self.master.canvas.show()
-    def click(self):
-        print('click!!!')
-
-    def mouse_pick(self, event):
-        line = event.artist
-        print('PICKED {}'.format(line))
+    def hide(self):
+        print(SnaptoCursor.cursors)
+        self.data_point.set_visible(False)
+        self.vert_line.set_visible(False)
+        self.text.set_visible(False)
+        self.master.canvas.show()
+        print(SnaptoCursor.cursors)
+    def show(self):
+        print(SnaptoCursor.cursors)
+        self.data_point.set_visible(True)
+        self.vert_line.set_visible(True)
+        self.text.set_visible(True)
+        self.master.canvas.show()
+        print(SnaptoCursor.cursors)
+    def update_series(self, series):
+        self.series = series
+    def update_axes(self):
+        self.axes = self.master.fig.axes
+    # def click(self):
+    #     print('click!!!')
+    # def mouse_pick(self, event):
+    #     line = event.artist
+    #     print('PICKED {}'.format(line))
 
 #TODO Rearrange widgets to make more sense in layout
 class GUI(tk.Frame):
@@ -136,7 +210,7 @@ class GUI(tk.Frame):
                                     command=self.todo5)
         self.test_button_2 = ttk.Button(self.export_button_frame,
                                     text='Test Button 2',
-                                    command=self.misc)
+                                    command=self.todo4)
         # self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)
         self.canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
@@ -151,12 +225,12 @@ class GUI(tk.Frame):
         header_bar = Series_Control_Row_Title_Bar(self.legend_list_frame)
 
         self.adjust_subplots()
-        self.add_all_list_items()
+        # self.add_all_list_items()
 
-        self.cursor = SnaptoCursor(self, self.subplots[0], Series.obj_list['Delete'].x, Series.obj_list['Delete'].y)
-        self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
-        self.cid2 = self.canvas.mpl_connect('pick_event', self.cursor.mouse_pick)
-        cid3 = self.canvas.mpl_connect('pick_event', self.on_pick)
+        # self.cursor = SnaptoCursor(self, Series.obj_list['Delete'])
+        # self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
+        # self.cid2 = self.canvas.mpl_connect('pick_event', self.cursor.mouse_pick)
+        # cid3 = self.canvas.mpl_connect('pick_event', self.on_pick)
         # cid4 = self.canvas.mpl_connect('motion_notify_event', self.canvas.onHilite)
         # tkagg.cursord[cursors.POINTER] = 'sb_h_double_arrow'
         # text = self.fig.axes[0].text(0.5, 0.5, 'TEST', ha='center', va='center', size=25)
@@ -192,16 +266,14 @@ class GUI(tk.Frame):
             self.canvas.show()
     def todo4(self):
         # self.fig.axes[0].scatter(Series.obj_list['Delete'].x,Series.obj_list['Delete'].y, label = Series.obj_list['Delete'].label)
-        self.fig.axes[0].scatter(Series.obj_list['Delete'].artists[0])
-        self.canvas.show()
+        self.cursor.show()
     def on_pick(self, event):
         line = event.artist
         xdata, ydata = line.get_data()
         ind = event.ind
         print('on pick line:', line)
     def todo5(self):
-        self.fig.axes[0].grid(True)
-        self.canvas.show()
+        self.cursor.hide()
     def todo6(self):
         # self.fig.axes[0].grid(False)
         # self.canvas.show()
@@ -226,9 +298,9 @@ class GUI(tk.Frame):
                 label = label + ' - Series {}'.format(i)
             new_series.append(Series(cols[0], cols[i], path_to_csv, label))
         return new_series
-    def get_line(self, series, ax):
-        line = [line for line in ax.lines if line.get_label()==series.label][0]
-        return line
+    # def get_line(self, series, ax):
+    #     line = [line for line in ax.lines if line.get_label()==series.label][0]
+    #     return line
     def plot_series(self, series):
         # series.axes_index = []
         series.artists = []
@@ -243,6 +315,8 @@ class GUI(tk.Frame):
         self.canvas.show()
         for artist in series.artists:
             artist.set_visible(series.show)
+        if series.label not in Series_Control_Row.control_rows.keys():
+            Series_Control_Row(self.legend_list_frame, series)
         self.canvas.show()
     def plot_multiple_series(self):
         for series in Series.obj_list.values():
@@ -259,7 +333,10 @@ class GUI(tk.Frame):
             self.subplots[i].set_ylabel(self.ylabel[i])
             self.subplots[i].grid(Plot_Control_Row.plot_control_rows[i].grid_var.get())
         # self.rescale_axes()
+        self.cursor = SnaptoCursor(self, Series.obj_list['Delete'])
+        self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
         self.plot_multiple_series()
+        # self.cursor.update_axes()
         self.fig.tight_layout()
         self.canvas.show()
     def add_a_subplot(self):
@@ -316,13 +393,13 @@ class GUI(tk.Frame):
                 new_series = self.read_in_csv(each_file)
                 for series in new_series:
                     self.plot_series(series)
-                    self.add_list_item(series)
+                    # self.add_list_item(series)
             # self.open_button.pack()
-    def add_list_item(self, series):
-        Series_Control_Row(self.legend_list_frame, series)
-    def add_all_list_items(self):
-        for series in Series.obj_list.values():
-            self.add_list_item(series)
+    # def add_list_item(self, series):
+    #     Series_Control_Row(self.legend_list_frame, series)
+    # def add_all_list_items(self):
+    #     for series in Series.obj_list.values():
+    #         self.add_list_item(series)
     #TODO: Change behavior so graphs are selectable
 
 class Plot_Control_Row(GUI):
@@ -335,13 +412,10 @@ class Plot_Control_Row(GUI):
         self.grid_var = tk.BooleanVar()
         self.grid_var.set(0)
         self.x_lower_bound = tk.DoubleVar()
-        # self.x_lower_bound = tk.StringVar()
         self.x_lower_bound.set(0)
         self.x_upper_bound = tk.DoubleVar()
         self.x_upper_bound.set(1)
         self.xbar = tk.DoubleVar()
-        # self.xbar = tk.StringVar()
-        # self.xbar.set(40.0)
         self.y_lower_bound = tk.DoubleVar()
         self.y_lower_bound.set(0)
         self.y_upper_bound = tk.DoubleVar()
@@ -392,9 +466,7 @@ class Plot_Control_Row(GUI):
         self.resize_button = ttk.Button(self,
                                     text = 'Rescale',
                                     command = self.update_bounds)
-
         # Packing
-        # self.plot_label.pack(side = tk.LEFT)
         self.plot_label.grid(row=0, column=0, sticky=tk.N+tk.S)
         self.x_scale_label.grid(row=0, column=1, sticky=tk.N+tk.S)
         self.x_scale_label.grid(row=0, column=2, sticky=tk.N+tk.S)
@@ -455,13 +527,13 @@ class Series_Control_Row_Title_Bar(GUI):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
         self.config(bg="black", bd=1)
-        self.checkvar1 = tk.BooleanVar()
-        self.checkvar1.set(0)
+        self.cursor_var = tk.BooleanVar()
+        self.cursor_var.set(1)
         self.checkvar2 = tk.BooleanVar()
         self.checkvar2.set(1)
         self.cursor_checkbox = ttk.Checkbutton(self,
-                                    variable=self.checkvar1,
-                                    command=self.show_or_hide_cursor)
+                                    variable=self.cursor_var,
+                                    command=self.show_or_hide_cursors)
         self.show_hide_checkbox = ttk.Checkbutton(self,
                                     variable=self.checkvar2,
                                     command=self.show_or_hide_all)
@@ -482,8 +554,13 @@ class Series_Control_Row_Title_Bar(GUI):
         self.series_remove_label.grid(row=0, column=4, sticky=tk.N+tk.S)
         self.grid(sticky=tk.E+tk.W)
         Series_Control_Row_Title_Bar.header = self
-    def show_or_hide_cursor(self):
-        todo()
+    def show_or_hide_cursors(self):
+        set_state = tk.DISABLED
+        if self.cursor_var.get():
+            set_state = tk.NORMAL
+        for row in Series_Control_Row.control_rows.values():
+            row.radio_btn.configure(state = set_state)
+            row.show_or_hide_cursor()
     def show_or_hide_all(self):
         for row in Series_Control_Row.control_rows.values():
             if row.checkvar.get() != self.checkvar2.get():
@@ -543,12 +620,14 @@ class Series_Control_Row(GUI):
     def open_edit_window(self):
         if Edit_Series_Window.no_instance:
             Edit_Series_Window(self, self.series)
-    def get_scatter(self, ax):
-        scatter = [scatter for scatter in ax.collections if scatter.get_label()==self.series.label][0]
-        return scatter
-    def get_line(self, ax):
-        line = [line for line in ax.lines if line.get_label()==self.series.label][0]
-        return line
+    # def get_scatter(self, ax):
+    #     scatter = [scatter for scatter in ax.collections if scatter.get_label()==self.series.label][0]
+    #     return scatter
+    # def get_line(self, ax):
+    #     line = [line for line in ax.lines if line.get_label()==self.series.label][0]
+    #     return line
+    def show_or_hide_cursor():
+        todo()
     def show_or_hide_line(self):
         for artist in self.series.artists:
             artist.set_visible(self.checkvar.get())
@@ -559,11 +638,13 @@ class Series_Control_Row(GUI):
         self.master.master.canvas.show()
     #FIXME Calling self.master.master... is probably a really dumb way to reach root window
     def remove_series(self):
-        for ax in self.master.master.fig.axes:
-            if self.series.plot_type == 'scatter':
-                ax.collections.remove(self.get_scatter(ax))
-            else:
-                ax.lines.remove(self.get_line(ax))
+        # for ax in self.master.master.fig.axes:
+        #     if self.series.plot_type == 'scatter':
+        #         ax.collections.remove(self.get_scatter(ax))
+        #     else:
+        #         ax.lines.remove(self.get_line(ax))
+        for artist in self.series.artists:
+            artist.remove()
         del Series.obj_list[self.series.label]
         del Series_Control_Row.control_rows[self.series.label]
         del self.series
@@ -571,12 +652,14 @@ class Series_Control_Row(GUI):
         self.master.master.canvas.show()
         self.destroy()
     def select_cursor(self):
+        self.master.master.cursor.update_series(self.series)
         print(self.master.master.radio_var.get())
         todo()
 
 #Series object stores information about the series to be graphed
 class Series:
     obj_list = {}
+    largest = {}
     def __init__(self, x, y, path_to_csv, label=None):
         self.show = True
         self.x_title = []
@@ -592,7 +675,8 @@ class Series:
         self.y = [float(y) for y in self.y]
         self.x_range = [min(self.x), max(self.x)]
         self.y_range = [min(self.y), max(self.y)]
-        self.peak_index = self.x.index(max(self.x))
+        self.y_max = max(self.y)
+        self.peak_index = self.y.index(self.y_max)
         self.label = label
         if self.label is None:
             self.label = os.path.split(self.csv_path)[1].lower()[:-4]
