@@ -1,50 +1,3 @@
-#
-# class SnaptoCursor(object):
-#     """
-#     Code credit: Matplotlib.org documentation.
-#     """
-#     #TODO Make this take a series instead of x and y. For versatility...
-#     def __init__(self, master, fig, series):
-#         self.master = master
-#         self.axes = fig.axes
-#         self.series = series
-#         self.x = np.array(series.x)
-#         self.y = np.array(series.y)
-#         self.ly = self.axes[0].axvline(color='k', picker=1)  # the vert line
-#         x_temp = self.x[series.peak_index]
-#         y_temp = self.y[series.peak_index]
-#         [self.data_point] = self.axes[0].plot([x_temp], [y_temp], marker='o', markersize=5, color="red")
-#         self.ly.set_xdata(x_temp)
-#         self.text = self.axes[0].text(x_temp, y_temp, '({}, {})'.format(x_temp, y_temp))
-#     def mouse_move(self, event):
-#         if not event.inaxes:
-#             return
-#         if event.button != 1:
-#             return
-#         self.click()
-#         x = event.xdata
-#         index = np.searchsorted(self.x, [x])[0]
-#         x = self.x[index]
-#         y = self.y[index]
-#         print(x, y)
-#         self.data_point.set_xdata(x)
-#         self.data_point.set_ydata(y)
-#         self.ly.set_xdata(x)
-#         self.text.remove()
-#         s = '({}, {})'.format(x, y)
-#         self.text = self.axes[0].text(x, y, s)
-#         self.master.canvas.show()
-#     def click(self):
-#         print('click!!!')
-#     def mouse_pick(self, event):
-#         line = event.artist
-#         print('PICKED {}'.format(line))
-#
-#
-
-
-
-
 import csv
 import argparse
 import os
@@ -87,53 +40,86 @@ class SnaptoCursor(object):
     Code credit: Matplotlib.org documentation.
     """
     cursors = {}
-    def __init__(self, master, series=None):
+    def __init__(self, master, ax_num, series=None):
         self.master = master
+        self.ax_num = ax_num
         self.axes = self.master.fig.axes
         self.series = series
         self.x = np.array(series.x)
         self.y = np.array(series.y)
-        self.vert_line = self.axes[0].axvline(color='k', picker=1)  # the vert line
+        self.vert_line = self.axes[self.ax_num].axvline(color='k', picker=1)  # the vert line
         x_start = self.x[series.peak_index]
         y_start = self.y[series.peak_index]
-        self.data_point = self.axes[0].plot([x_start], [y_start], marker='o', markersize=5, color="red")[0]
+        self.last_event_x = x_start
+        self.data_point = self.axes[self.ax_num].plot([x_start],
+                                            [y_start],
+                                            marker='o',
+                                            markersize=5,
+                                            markerfacecolor = 'none',
+                                            color='k')[0]
         self.vert_line.set_xdata(x_start)
-        self.text = self.axes[0].text(x_start, y_start, '({}, {})'.format(x_start, y_start))
-        SnaptoCursor.cursors[self.series.label] = self
+        self.text = self.axes[self.ax_num].text(x_start,
+                                            y_start,
+                                            '({}, {})'.format(x_start, y_start))
+        # SnaptoCursor.cursors[self.series.label] = self
+        SnaptoCursor.cursors[self.ax_num] = self
     def mouse_move(self, event):
         if not event.inaxes:
             return
         if event.button != 1:
             return
+        if event.inaxes != self.axes[self.ax_num]:
+            return
         # self.click()
-        x = event.xdata
-        index = np.searchsorted(self.x, [x])[0]
+        self.last_event_x = event.xdata
+        # x = event.xdata
+        # index = np.searchsorted(self.x, [self.last_event_x])[0]
+        # x = self.x[index]
+        # y = self.y[index]
+        # self.data_point.set_xdata(x)
+        # self.data_point.set_ydata(y)
+        # self.vert_line.set_xdata(x)
+        # self.text.remove()
+        # s = '({}, {})'.format(x, y)
+        # self.text = self.axes[self.ax_num].text(x, y, s)
+        # self.master.canvas.show()
+        self.update_position()
+    def update_position(self):
+        index = np.searchsorted(self.x, [self.last_event_x])[0]
         x = self.x[index]
         y = self.y[index]
-        # print(x, y)
         self.data_point.set_xdata(x)
         self.data_point.set_ydata(y)
         self.vert_line.set_xdata(x)
         self.text.remove()
         s = '({}, {})'.format(x, y)
-        self.text = self.axes[0].text(x, y, s)
+        self.text = self.axes[self.ax_num].text(x, y, s)
         self.master.canvas.show()
     def hide(self):
-        print(SnaptoCursor.cursors)
         self.data_point.set_visible(False)
         self.vert_line.set_visible(False)
         self.text.set_visible(False)
         self.master.canvas.show()
-        print(SnaptoCursor.cursors)
     def show(self):
-        print(SnaptoCursor.cursors)
         self.data_point.set_visible(True)
         self.vert_line.set_visible(True)
         self.text.set_visible(True)
         self.master.canvas.show()
-        print(SnaptoCursor.cursors)
     def update_series(self, series):
         self.series = series
+        self.x = np.array(self.series.x)
+        self.y = np.array(self.series.y)
+        self.update_position()
+        # index = np.searchsorted(self.x, [self.last_event_x])[0]
+        # x = self.x[index]
+        # y = self.y[index]
+        # self.data_point.set_xdata(x)
+        # self.data_point.set_ydata(y)
+        # self.vert_line.set_xdata(x)
+        # self.text.remove()
+        # s = '({}, {})'.format(x, y)
+        # self.text = self.axes[self.ax_num].text(x, y, s)
+        # self.master.canvas.show()
     def update_axes(self):
         self.axes = self.master.fig.axes
     # def click(self):
@@ -183,6 +169,10 @@ class GUI(tk.Frame):
         self.ylabel = ['Amplitude (V)']*4
         self.testvar=tk.DoubleVar()
         self.radio_var = tk.StringVar()
+        #set radio_var to first series in dict of series. Probs a better way.
+        for key in Series.obj_list.keys():
+            self.radio_var.set(key)
+            break
 
         self.plot_controls_frame = tk.Frame(self, bg="black", bd=1)
         self.graph_frame = tk.Frame(self)
@@ -222,7 +212,7 @@ class GUI(tk.Frame):
         self.canvas._tkcanvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
         # self.canvas._tkcanvas.grid(row=3, column=0, columnspan=5)
 
-        header_bar = Series_Control_Row_Title_Bar(self.legend_list_frame)
+        self.header_bar = Series_Control_Row_Title_Bar(self.legend_list_frame)
 
         self.adjust_subplots()
         # self.add_all_list_items()
@@ -323,6 +313,25 @@ class GUI(tk.Frame):
             self.plot_series(series)
     def insert_plot_control(self, index):
         Plot_Control_Row(self.plot_controls_frame, index)
+    def plot_cursors(self):
+        self.cursor = [None]*self.no_of_subplots
+        self.cid = [None]*self.no_of_subplots
+        # if self.header_bar.header.cursor_var.get():
+        # for row in Series_Control_Row.control_rows.values():
+        #     if row.
+        # print('HERE: {}'.format(self.radio_var.get()))
+        cursor_series = self.radio_var.get()
+        if cursor_series == '':
+            return
+        for i in range(self.no_of_subplots):
+            self.cursor[i] = SnaptoCursor(
+                                        self,
+                                        i,
+                                        Series.obj_list[cursor_series])
+            self.cid[i] = self.canvas.mpl_connect(
+                                        'motion_notify_event',
+                                        self.cursor[i].mouse_move)
+        self.header_bar.header.show_or_hide_cursors()
     def adjust_subplots(self):
         self.fig.clear()
         for i, j in enumerate(self.subplot_layouts[self.no_of_subplots-1]):
@@ -333,9 +342,12 @@ class GUI(tk.Frame):
             self.subplots[i].set_ylabel(self.ylabel[i])
             self.subplots[i].grid(Plot_Control_Row.plot_control_rows[i].grid_var.get())
         # self.rescale_axes()
-        self.cursor = SnaptoCursor(self, Series.obj_list['Delete'])
-        self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
+        # self.cursor = SnaptoCursor(self, Series.obj_list['Delete'])
+        # self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
+        # self.cursor = [None]*self.no_of_subplots
+        # self.cid = [None]*self.no_of_subplots
         self.plot_multiple_series()
+        self.plot_cursors()
         # self.cursor.update_axes()
         self.fig.tight_layout()
         self.canvas.show()
@@ -349,6 +361,7 @@ class GUI(tk.Frame):
             del self.subplots[-1]
             Plot_Control_Row.plot_control_rows[self.no_of_subplots-1].destroy()
             del Plot_Control_Row.plot_control_rows[self.no_of_subplots-1]
+            del SnaptoCursor.cursors[self.no_of_subplots-1]
             self.no_of_subplots -= 1
         self.adjust_subplots()
     def _quit(self):
@@ -555,12 +568,18 @@ class Series_Control_Row_Title_Bar(GUI):
         self.grid(sticky=tk.E+tk.W)
         Series_Control_Row_Title_Bar.header = self
     def show_or_hide_cursors(self):
+        #can probably simplify this logic, but it works
         set_state = tk.DISABLED
         if self.cursor_var.get():
             set_state = tk.NORMAL
         for row in Series_Control_Row.control_rows.values():
             row.radio_btn.configure(state = set_state)
-            row.show_or_hide_cursor()
+        if set_state == tk.DISABLED:
+            for cursor in SnaptoCursor.cursors.values():
+                cursor.hide()
+        else:
+            for cursor in SnaptoCursor.cursors.values():
+                cursor.show()
     def show_or_hide_all(self):
         for row in Series_Control_Row.control_rows.values():
             if row.checkvar.get() != self.checkvar2.get():
@@ -626,7 +645,7 @@ class Series_Control_Row(GUI):
     # def get_line(self, ax):
     #     line = [line for line in ax.lines if line.get_label()==self.series.label][0]
     #     return line
-    def show_or_hide_cursor():
+    def show_or_hide_cursor(self):
         todo()
     def show_or_hide_line(self):
         for artist in self.series.artists:
@@ -652,10 +671,11 @@ class Series_Control_Row(GUI):
         self.master.master.canvas.show()
         self.destroy()
     def select_cursor(self):
-        self.master.master.cursor.update_series(self.series)
-        print(self.master.master.radio_var.get())
-        todo()
-
+        for cursor in SnaptoCursor.cursors.values():
+            cursor.update_series(self.series)
+        # self.master.master.cursor[0].update_series(self.series)
+        # print(self.master.master.radio_var.get())
+        # todo()
 #Series object stores information about the series to be graphed
 class Series:
     obj_list = {}
