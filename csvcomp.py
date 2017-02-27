@@ -40,6 +40,7 @@ class SnaptoCursor(object):
     Code credit: Matplotlib.org documentation.
     """
     cursors = {}
+    #TODO: Give an optional initial x state coord
     def __init__(self, master, ax_num, series=None):
         self.master = master
         self.ax_num = ax_num
@@ -70,19 +71,9 @@ class SnaptoCursor(object):
             return
         if event.inaxes != self.axes[self.ax_num]:
             return
-        # self.click()
+        if not self.data_point.get_visible():
+            return
         self.last_event_x = event.xdata
-        # x = event.xdata
-        # index = np.searchsorted(self.x, [self.last_event_x])[0]
-        # x = self.x[index]
-        # y = self.y[index]
-        # self.data_point.set_xdata(x)
-        # self.data_point.set_ydata(y)
-        # self.vert_line.set_xdata(x)
-        # self.text.remove()
-        # s = '({}, {})'.format(x, y)
-        # self.text = self.axes[self.ax_num].text(x, y, s)
-        # self.master.canvas.show()
         self.update_position()
     def update_position(self):
         index = np.searchsorted(self.x, [self.last_event_x])[0]
@@ -91,9 +82,10 @@ class SnaptoCursor(object):
         self.data_point.set_xdata(x)
         self.data_point.set_ydata(y)
         self.vert_line.set_xdata(x)
-        self.text.remove()
         s = '({}, {})'.format(x, y)
-        self.text = self.axes[self.ax_num].text(x, y, s)
+        self.text.set_x(x)
+        self.text.set_y(y)
+        self.text.set_text(s)
         self.master.canvas.show()
     def hide(self):
         self.data_point.set_visible(False)
@@ -105,25 +97,24 @@ class SnaptoCursor(object):
         self.vert_line.set_visible(True)
         self.text.set_visible(True)
         self.master.canvas.show()
-    def update_series(self, series):
+    def update_series(self, series=None):
         self.series = series
+        if self.series == None:
+            if not Series.obj_list:
+                print('Nothing to put a cursor on')
+                # self.hide()
+                del self
+                print(SnaptoCursor.cursors)
+                return
+            for key in Series.obj_list.keys():
+                self.master.radio_var.set(key)
+                self.series = Series.obj_list[key]
+                break
         self.x = np.array(self.series.x)
         self.y = np.array(self.series.y)
         self.update_position()
-        # index = np.searchsorted(self.x, [self.last_event_x])[0]
-        # x = self.x[index]
-        # y = self.y[index]
-        # self.data_point.set_xdata(x)
-        # self.data_point.set_ydata(y)
-        # self.vert_line.set_xdata(x)
-        # self.text.remove()
-        # s = '({}, {})'.format(x, y)
-        # self.text = self.axes[self.ax_num].text(x, y, s)
-        # self.master.canvas.show()
     def update_axes(self):
         self.axes = self.master.fig.axes
-    # def click(self):
-    #     print('click!!!')
     # def mouse_pick(self, event):
     #     line = event.artist
     #     print('PICKED {}'.format(line))
@@ -479,6 +470,15 @@ class Plot_Control_Row(GUI):
         self.resize_button = ttk.Button(self,
                                     text = 'Rescale',
                                     command = self.update_bounds)
+        #Key Bindings
+        self.x_scale_box_lower.bind('<Return>', self.update_bounds)
+        self.x_scale_box_upper.bind('<Return>', self.update_bounds)
+        self.y_scale_box_lower.bind('<Return>', self.update_bounds)
+        self.y_scale_box_upper.bind('<Return>', self.update_bounds)
+        self.y_scale_box_upper.bind('<Return>', self.update_bounds)
+        self.grid_checkbox.bind('<Return>', self.show_or_hide_grid)
+
+
         # Packing
         self.plot_label.grid(row=0, column=0, sticky=tk.N+tk.S)
         self.x_scale_label.grid(row=0, column=1, sticky=tk.N+tk.S)
@@ -504,7 +504,7 @@ class Plot_Control_Row(GUI):
     #TODO: Rethink the way the slider scales
     # def update_axes(self, axes):
     #     self.axes = axes
-    def show_or_hide_grid(self):
+    def show_or_hide_grid(self, event=None):
         self.master.master.subplots[self.subplot_index].grid(self.grid_var.get())
         self.master.master.canvas.show()
     def rescale_x_axes(self, a, b):
@@ -515,7 +515,7 @@ class Plot_Control_Row(GUI):
         self.master.master.subplots[self.subplot_index].set_ylim(a, b)
         # self.axes.set_ylim(a, b)
         self.master.master.canvas.show()
-    def update_bounds(self):
+    def update_bounds(self, event=None):
         self.rescale_x_axes(self.x_lower_bound.get(), self.x_upper_bound.get())
         self.rescale_y_axes(self.y_lower_bound.get(), self.y_upper_bound.get())
         # self.xbar.set(1)
@@ -664,6 +664,9 @@ class Series_Control_Row(GUI):
         #         ax.lines.remove(self.get_line(ax))
         for artist in self.series.artists:
             artist.remove()
+        if self.master.master.radio_var.get() == self.series.label:
+            for cursor in SnaptoCursor.cursors.values():
+                cursor.update_series()
         del Series.obj_list[self.series.label]
         del Series_Control_Row.control_rows[self.series.label]
         del self.series
