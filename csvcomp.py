@@ -99,12 +99,17 @@ class SnaptoCursor(object):
         self.master.canvas.show()
     def update_series(self, series=None):
         self.series = series
+        print(Series.obj_list)
         if self.series == None:
+            print('HERE')
+            print(not Series.obj_list)
+            print(Series.obj_list)
             if not Series.obj_list:
                 print('Nothing to put a cursor on')
-                # self.hide()
+                self.hide()
                 del self
-                print(SnaptoCursor.cursors)
+                # del SnaptoCursor.cursors
+                # print(SnaptoCursor.cursors)
                 return
             for key in Series.obj_list.keys():
                 self.master.radio_var.set(key)
@@ -235,6 +240,7 @@ class GUI(tk.Frame):
         self.remove_plot_button.grid(row=6, column=3)
         self.toolbar_frame.grid(row=7, column=0, columnspan=5, sticky=tk.W)
 
+#DELETE########################################################################
     def misc(self):
         # tkagg.cursord[1] = 'coffee_mug'
         # self.canvas.set_cursor(1)
@@ -259,6 +265,7 @@ class GUI(tk.Frame):
         # self.fig.axes[0].grid(False)
         # self.canvas.show()
         print(Series.obj_list['Delete'].artists[0].axes.figure)
+#/DELETE#######################################################################
 
     def read_in_csv(self, path_to_csv):
         rows = []
@@ -505,6 +512,8 @@ class Plot_Control_Row(GUI):
     # def update_axes(self, axes):
     #     self.axes = axes
     def show_or_hide_grid(self, event=None):
+        if event:
+            self.grid_var.set(not self.grid_var.get())
         self.master.master.subplots[self.subplot_index].grid(self.grid_var.get())
         self.master.master.canvas.show()
     def rescale_x_axes(self, a, b):
@@ -664,11 +673,12 @@ class Series_Control_Row(GUI):
         #         ax.lines.remove(self.get_line(ax))
         for artist in self.series.artists:
             artist.remove()
+
+        del Series.obj_list[self.series.label]
+        del Series_Control_Row.control_rows[self.series.label]
         if self.master.master.radio_var.get() == self.series.label:
             for cursor in SnaptoCursor.cursors.values():
                 cursor.update_series()
-        del Series.obj_list[self.series.label]
-        del Series_Control_Row.control_rows[self.series.label]
         del self.series
         self.master.master.legend = plt.legend()
         self.master.master.canvas.show()
