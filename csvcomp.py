@@ -1,3 +1,13 @@
+###############################################################################
+#                   CSV Graphing Utility
+# This little script will generate a graph of all the csv files in the CWD.
+# Graphs can be added, removed, exported, and tweaked in various ways.
+# Please see the documentation for more information.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+###############################################################################
+
 import csv
 import argparse
 import os
@@ -61,7 +71,7 @@ class SnaptoCursor(object):
         self.vert_line.set_xdata(x_start)
         self.text = self.axes[self.ax_num].text(x_start,
                                             y_start,
-                                            '({}, {})'.format(x_start, y_start))
+                                            '({:.3f}, {})'.format(x_start, y_start))
         # SnaptoCursor.cursors[self.series.label] = self
         SnaptoCursor.cursors[self.ax_num] = self
     def mouse_move(self, event):
@@ -82,7 +92,7 @@ class SnaptoCursor(object):
         self.data_point.set_xdata(x)
         self.data_point.set_ydata(y)
         self.vert_line.set_xdata(x)
-        s = '({}, {})'.format(x, y)
+        s = '({:.3f}, {})'.format(x, y)
         self.text.set_x(x)
         self.text.set_y(y)
         self.text.set_text(s)
@@ -99,11 +109,7 @@ class SnaptoCursor(object):
         self.master.canvas.show()
     def update_series(self, series=None):
         self.series = series
-        print(Series.obj_list)
         if self.series == None:
-            print('HERE')
-            print(not Series.obj_list)
-            print(Series.obj_list)
             if not Series.obj_list:
                 print('Nothing to put a cursor on')
                 self.hide()
@@ -253,14 +259,15 @@ class GUI(tk.Frame):
             self.canvas.show()
     def todo4(self):
         # self.fig.axes[0].scatter(Series.obj_list['Delete'].x,Series.obj_list['Delete'].y, label = Series.obj_list['Delete'].label)
-        self.cursor.show()
+        self.fig.axes[0].get_smart_bounds()
     def on_pick(self, event):
         line = event.artist
         xdata, ydata = line.get_data()
         ind = event.ind
         print('on pick line:', line)
     def todo5(self):
-        self.cursor.hide()
+        # self.cursor.hide()
+        print(plt.rcParams)
     def todo6(self):
         # self.fig.axes[0].grid(False)
         # self.canvas.show()
@@ -289,8 +296,12 @@ class GUI(tk.Frame):
     # def get_line(self, series, ax):
     #     line = [line for line in ax.lines if line.get_label()==series.label][0]
     #     return line
-    def plot_series(self, series):
+    def plot_series(self, series, axes=None):
         # series.axes_index = []
+        if axes != None:
+            #Put code here to accept axes? Maybe take subplot index instead?
+            print('PLOTTING')
+            return
         series.artists = []
         for ax in self.fig.axes:
             if series.plot_type == 'scatter':
@@ -306,9 +317,9 @@ class GUI(tk.Frame):
         if series.label not in Series_Control_Row.control_rows.keys():
             Series_Control_Row(self.legend_list_frame, series)
         self.canvas.show()
-    def plot_multiple_series(self):
+    def plot_multiple_series(self, axes=None):
         for series in Series.obj_list.values():
-            self.plot_series(series)
+            self.plot_series(series, axes)
     def insert_plot_control(self, index):
         Plot_Control_Row(self.plot_controls_frame, index)
     def plot_cursors(self):
@@ -339,11 +350,6 @@ class GUI(tk.Frame):
             self.subplots[i].set_xlabel(self.xlabel[i])
             self.subplots[i].set_ylabel(self.ylabel[i])
             self.subplots[i].grid(Plot_Control_Row.plot_control_rows[i].grid_var.get())
-        # self.rescale_axes()
-        # self.cursor = SnaptoCursor(self, Series.obj_list['Delete'])
-        # self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
-        # self.cursor = [None]*self.no_of_subplots
-        # self.cid = [None]*self.no_of_subplots
         self.plot_multiple_series()
         self.plot_cursors()
         # self.cursor.update_axes()
@@ -463,6 +469,7 @@ class Plot_Control_Row(GUI):
                                     textvariable = self.y_lower_bound)
         self.y_scale_slider = ttk.Scale(self,
                                     length = 100,
+                                    from_ = 0.001,
                                     var = self.ybar,
                                     command = self.y_slider_moved)
         self.y_scale_box_upper = ttk.Entry(self,
@@ -474,16 +481,20 @@ class Plot_Control_Row(GUI):
                                     text='Grid',
                                     command=self.show_or_hide_grid)
         # Resize Button
-        self.resize_button = ttk.Button(self,
-                                    text = 'Rescale',
-                                    command = self.update_bounds)
+        # self.resize_button = ttk.Button(self,
+        #                             text = 'Rescale',
+        #                             command = self.update_bounds)
+        #Reset button
+        self.reset_button = ttk.Button(self,
+                                    text = 'Reset',
+                                    command = self.reset_bounds)
         #Key Bindings
-        self.x_scale_box_lower.bind('<Return>', self.update_bounds)
-        self.x_scale_box_upper.bind('<Return>', self.update_bounds)
-        self.y_scale_box_lower.bind('<Return>', self.update_bounds)
-        self.y_scale_box_upper.bind('<Return>', self.update_bounds)
-        self.y_scale_box_upper.bind('<Return>', self.update_bounds)
+        self.x_scale_box_lower.bind('<Return>', self.update_x_bounds)
+        self.x_scale_box_upper.bind('<Return>', self.update_x_bounds)
+        self.y_scale_box_lower.bind('<Return>', self.update_y_bounds)
+        self.y_scale_box_upper.bind('<Return>', self.update_y_bounds)
         self.grid_checkbox.bind('<Return>', self.show_or_hide_grid)
+        self.reset_button.bind('<Return>', self.reset_bounds)
 
 
         # Packing
@@ -500,7 +511,8 @@ class Plot_Control_Row(GUI):
         self.y_scale_slider.grid(row=0, column=10, sticky=tk.N+tk.S)
         self.y_scale_box_upper.grid(row=0, column=11, sticky=tk.N+tk.S)
         self.grid_checkbox.grid(row=0, column=12, sticky=tk.N+tk.S)
-        self.resize_button.grid(row=0, column=13, sticky=tk.N+tk.S)
+        # self.resize_button.grid(row=0, column=13, sticky=tk.N+tk.S)
+        self.reset_button.grid(row=0, column=13, sticky=tk.N+tk.S)
         self.grid(sticky=tk.E+tk.W)
 
         Plot_Control_Row.plot_control_rows[self.subplot_index] = self
@@ -524,13 +536,25 @@ class Plot_Control_Row(GUI):
         self.master.master.subplots[self.subplot_index].set_ylim(a, b)
         # self.axes.set_ylim(a, b)
         self.master.master.canvas.show()
-    def update_bounds(self, event=None):
+    def update_x_bounds(self, event=None):
         self.rescale_x_axes(self.x_lower_bound.get(), self.x_upper_bound.get())
+        if event != None:
+            self.x_scale_slider.set(100)
+    def update_y_bounds(self, event=None):
         self.rescale_y_axes(self.y_lower_bound.get(), self.y_upper_bound.get())
-        # self.xbar.set(1)
-    # def update_y_bounds(self):
-    #     self.rescale_axes(self.y_lower_bound.get(), self.y_upper_bound.get())
-        # self.ybar.set(1)
+        if event != None:
+            self.y_scale_slider.set(100)
+    def reset_bounds(self, event=None):
+        self.master.master.subplots[self.subplot_index].clear()
+        # self.master.master.subplots[self.subplot_index]
+        self.grid_var.set(0)
+        self.master.master.subplots[self.subplot_index].set_xlabel(self.master.master.xlabel[self.subplot_index])
+        self.master.master.subplots[self.subplot_index].set_ylabel(self.master.master.ylabel[self.subplot_index])
+        self.master.master.subplots[self.subplot_index].grid(self.grid_var.get())
+        # self.master.master.plot_multiple_series() #Edit to take an axes arg. Lotta work...
+        # self.master.master.plot_cursors()
+        # self.fig.tight_layout()
+        self.master.master.canvas.show()
     def x_slider_moved(self, val):
         a = self.x_lower_bound.get()
         b = self.x_upper_bound.get()

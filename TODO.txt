@@ -1,59 +1,52 @@
-Toggle legend button
-Show/Hide on multiple plots
+TODO Next
+Start at 553
+Finish reset button on plot controls
+read default axes
+Remove extraneous files from github
 
+EXTRAS
+Make installer script for Windows
+Make installer script for BASH
+Make it an exe somehow. I don't care how, but your coworkers do.
+README
 
-
-helpful hint: apparently artists contain references to their axes and figure
-so line.axes.figure will actually return something helpful. Would have been nice to k now this earlier.
-
-
-
-Resizeable graph
-bind enter to rescale
-fix plot controller generation
+PLOT CONTROLS
+Make rescale boxes accommodate more digits
+Validation code for rescale boxes
+Read default axes scale values into scale boxes
 change default slider position on plot controls
-export to Excel
+fix default plot control layout issue
+
+MISC
+Add Tab-able widgets
+Toggle legend button
 Make utf encoding explicit?
-toggle legend
-
-colored list items
-
-cursor that works
-check for doubling up of series names and prevent or fix
-strip headers from csv files that have them - warn with popup
-
-header row above list items
-
-add file button placed properly
-
-better layout margins
-
-place extraneous buttons better
-
-border around list items
-
-make default size whole gfraph
-
+Include menu bar at the top?
 reset button on graph
-smooth graphing
+smooth graphing option
+graph as points option
 edit button/fields for series and axis titles
+create template config file?
 
-remove plots from legend when deleted
+SERIES CONTROLS
+Fix title bar
+make scrollable for overflow
+fix layout
+Change label to checkbox label (for tabbing, auto selection of checkbox on click)
+Or don't and pair label with highlight feature
+Highlight lines by clicking them, focusing on series control row
 
-create template config file
+CURSOR
+Put bbox around data point text
+Sig figs!
 
+EXCEL
+export to Excel opens new window for export options
+Create graphs automatically
 
-BUG: If a plot is added/removed after a series has been unchecked, plots correctly, but legend all fucked up.
-
-
-
-Fix random crashes:
-
-Traceback (most recent call last):
-  File "csvcomp.py", line 415, in <module>
-    main()
-  File "csvcomp.py", line 411, in main
-    root.mainloop()
-  File "/usr/local/Cellar/python3/3.6.0/Frameworks/Python.framework/Versions/3.6/lib/python3.6/tkinter/__init__.py", line 1277, in mainloop
-    self.tk.mainloop(n)
-UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+CLEANUP CODE
+GUI.adjust_subplots is doing too much work, I think, and possibly slowing things down
+flying by the seat of my pants on object handling and leaning hard on auto garbage collection
+master.master.blah... there's gotta be a better way.
+Untangle spaghetti.
+Take another look at GUI.plot_series code
