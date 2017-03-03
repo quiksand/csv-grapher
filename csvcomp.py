@@ -259,7 +259,10 @@ class GUI(tk.Frame):
             self.canvas.show()
     def todo4(self):
         # self.fig.axes[0].scatter(Series.obj_list['Delete'].x,Series.obj_list['Delete'].y, label = Series.obj_list['Delete'].label)
-        self.fig.axes[0].get_smart_bounds()
+        print(self.fig.axes[0].spines)
+        self.fig.axes[0].spines['bottom'].set_smart_bounds(True)
+        self.canvas.show()
+        # self.fig.axes[0].get_smart_bounds()
     def on_pick(self, event):
         line = event.artist
         xdata, ydata = line.get_data()
@@ -271,7 +274,7 @@ class GUI(tk.Frame):
     def todo6(self):
         # self.fig.axes[0].grid(False)
         # self.canvas.show()
-        print(Series.obj_list['Delete'].artists[0].axes.figure)
+        print(self.fig.ax[0].spines)
 #/DELETE#######################################################################
 
     def read_in_csv(self, path_to_csv):
