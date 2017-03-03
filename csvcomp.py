@@ -299,19 +299,25 @@ class GUI(tk.Frame):
     # def get_line(self, series, ax):
     #     line = [line for line in ax.lines if line.get_label()==series.label][0]
     #     return line
-    def plot_series(self, series, axes=None):
+    def plot_series(self, series, ax_ind=None):
         # series.axes_index = []
-        if axes != None:
+        if ax_ind != None:
             #Put code here to accept axes? Maybe take subplot index instead?
-            print('PLOTTING')
-            return
-        series.artists = []
-        for ax in self.fig.axes:
             if series.plot_type == 'scatter':
-                art = ax.scatter(series.x, series.y, label=series.label, picker=1)
+                art = self.fig.axes[ax_ind].scatter(series.x, series.y, label=series.label, picker=1)
             else:
-                [art] = ax.plot(series.x, series.y, label=series.label, picker=1)
-            series.artists.append(art)
+                [art] = self.fig.axes[ax_ind].plot(series.x, series.y, label=series.label, picker=1)
+            series.artists.append(None)
+            series.artists[ax_ind] = art
+        else:
+            print('SUM TING WONG')
+            series.artists = [None]*4
+            for ax in self.fig.axes:
+                if series.plot_type == 'scatter':
+                    art = ax.scatter(series.x, series.y, label=series.label, picker=1)
+                else:
+                    [art] = ax.plot(series.x, series.y, label=series.label, picker=1)
+                series.artists.append(art)
         #FIXME: legend sometimes causes a warning to be issued.
         self.legend = plt.legend()
         self.canvas.show()
@@ -320,9 +326,9 @@ class GUI(tk.Frame):
         if series.label not in Series_Control_Row.control_rows.keys():
             Series_Control_Row(self.legend_list_frame, series)
         self.canvas.show()
-    def plot_multiple_series(self, axes=None):
+    def plot_multiple_series(self, ax_ind=None):
         for series in Series.obj_list.values():
-            self.plot_series(series, axes)
+            self.plot_series(series, ax_ind)
     def insert_plot_control(self, index):
         Plot_Control_Row(self.plot_controls_frame, index)
     def plot_cursors(self):
@@ -353,7 +359,8 @@ class GUI(tk.Frame):
             self.subplots[i].set_xlabel(self.xlabel[i])
             self.subplots[i].set_ylabel(self.ylabel[i])
             self.subplots[i].grid(Plot_Control_Row.plot_control_rows[i].grid_var.get())
-        self.plot_multiple_series()
+        for ax_ind, ax in enumerate(self.fig.axes):
+            self.plot_multiple_series(ax_ind)
         self.plot_cursors()
         # self.cursor.update_axes()
         self.fig.tight_layout()
@@ -412,7 +419,8 @@ class GUI(tk.Frame):
             for each_file in f_names:
                 new_series = self.read_in_csv(each_file)
                 for series in new_series:
-                    self.plot_series(series)
+                    for ax_ind, ax in enumerate(self.fig.axes):
+                        self.plot_series(series, ax_ind)
                     # self.add_list_item(series)
             # self.open_button.pack()
     # def add_list_item(self, series):
