@@ -307,7 +307,7 @@ class GUI(tk.Frame):
                 art = self.fig.axes[ax_ind].scatter(series.x, series.y, label=series.label, picker=1)
             else:
                 [art] = self.fig.axes[ax_ind].plot(series.x, series.y, label=series.label, picker=1)
-            series.artists.append(None)
+            # series.artists.append(None)
             series.artists[ax_ind] = art
         else:
             print('SUM TING WONG')
@@ -321,8 +321,10 @@ class GUI(tk.Frame):
         #FIXME: legend sometimes causes a warning to be issued.
         self.legend = plt.legend()
         self.canvas.show()
-        for artist in series.artists:
-            artist.set_visible(series.show)
+        series.artists[ax_ind].set_visible(series.show)
+        # for artist in series.artists:
+            # print(series, series.artists)
+            # artist.set_visible(series.show)
         if series.label not in Series_Control_Row.control_rows.keys():
             Series_Control_Row(self.legend_list_frame, series)
         self.canvas.show()
@@ -693,7 +695,8 @@ class Series_Control_Row(GUI):
         todo()
     def show_or_hide_line(self):
         for artist in self.series.artists:
-            artist.set_visible(self.checkvar.get())
+            if artist != None:
+                artist.set_visible(self.checkvar.get())
         # for ax in self.master.master.fig.axes:
         #     self.get_line(ax).set_visible(self.checkvar.get())
         self.series.show = self.checkvar.get()
@@ -707,7 +710,8 @@ class Series_Control_Row(GUI):
         #     else:
         #         ax.lines.remove(self.get_line(ax))
         for artist in self.series.artists:
-            artist.remove()
+            if artist != None:
+                artist.remove()
 
         del Series.obj_list[self.series.label]
         del Series_Control_Row.control_rows[self.series.label]
@@ -735,7 +739,7 @@ class Series:
         self.x = x
         self.y = y
         self.plot_type = 'line'
-        self.artists = []
+        self.artists = [None]*4
         # self.axes_index = [None]*4
         self.csv_path = path_to_csv
         self.remove_title_rows()
