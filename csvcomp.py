@@ -71,7 +71,7 @@ class SnaptoCursor(object):
         self.vert_line.set_xdata(x_start)
         self.text = self.axes[self.ax_num].text(x_start,
                                             y_start,
-                                            '({:.3f}, {})'.format(x_start, y_start))
+                                            '({:.3f}, {:.3e})'.format(x_start, y_start))
         # SnaptoCursor.cursors[self.series.label] = self
         SnaptoCursor.cursors[self.ax_num] = self
     def mouse_move(self, event):
@@ -92,7 +92,7 @@ class SnaptoCursor(object):
         self.data_point.set_xdata(x)
         self.data_point.set_ydata(y)
         self.vert_line.set_xdata(x)
-        s = '({:.3f}, {})'.format(x, y)
+        s = '({:.3f}, {:.3e})'.format(x, y)
         self.text.set_x(x)
         self.text.set_y(y)
         self.text.set_text(s)
@@ -374,6 +374,7 @@ class GUI(tk.Frame):
         self.adjust_subplots()
     def remove_a_subplot(self):
         if self.no_of_subplots > 1:
+            for art in 
             del self.subplots[-1]
             Plot_Control_Row.plot_control_rows[self.no_of_subplots-1].destroy()
             del Plot_Control_Row.plot_control_rows[self.no_of_subplots-1]
@@ -709,6 +710,7 @@ class Series_Control_Row(GUI):
         #         ax.collections.remove(self.get_scatter(ax))
         #     else:
         #         ax.lines.remove(self.get_line(ax))
+        print(self.series.artists)
         for artist in self.series.artists:
             if artist != None:
                 artist.remove()
