@@ -1,19 +1,22 @@
 # CSV-GRAPHER
 
 ## Overview
-CSV-GRAPHER is a utility for quickly graphing data in the .csv format. It automatically tries to graph all csv files in the current working directory, but has the option to add files form the GUI.
+CSV-GRAPHER is a utility for quickly graphing data in the .csv format. It automatically tries to graph all csv files in the current working directory, but has the option to add files from the GUI.
 
 ## Installation
 The script will run out-of-the-box so long as you have python 3.x installed with the matplotlib and numpy libraries.
 
 1. Install latest python (optional, if you already have python 3.x installed):
-https://www.python.org/
+
+  https://www.python.org/
 2. Install matplotlib and numpy (optional, if you already have them):
-In terminal or powershell:
+
+  In terminal or powershell:
 ```
 pip install matplotlib
 pip install numpy
 ```
+
 3. Get the repo:
 ```
 git clone https://github.com/quiksand/csv-grapher.git
@@ -34,7 +37,7 @@ As it's impossible to predict how data will be sorted, I made the following assu
 2. All data should be numeric (or able to be interpreted as such), with the exception of title row(s).
 3. Title rows will be stripped and used as data series labels.
 
-## Known Issues and Limitations
+## Known Issues & Limitations
 These are mostly weird edge cases that I hope to fix down the line, but if you're having issues, look here first.
 
 1. If all series are removed, weird things can happen to the legend/cursor. It's usually fixed by adding a new series.
@@ -46,7 +49,7 @@ These are mostly weird edge cases that I hope to fix down the line, but if you'r
 7. Currently limited to four subplots maximum.
 
 ## Inspiration & Development
-This is one of those "necessity is the mother of invention" sort of things. I was tasked with generating multiple very large xy data sets in csv format, then graphing them in Excel against each other on a super slow computer, then doing it all over again, for days on end. It involved much copying and pasting from multiple files, and then really repetitive graphing. Those familiar with Excel know that it's cool and powerful, but not always the most fun to work with, especially when the end result is likely to be thrown away after analysis. So what did I do? What anyone would, of course! Spend many more hours automating a tedious but ultimately short-lived task. XKCD summed it up perfectly here: https://xkcd.com/1319/.
+This is one of those "necessity is the mother of invention" sort of things. I was tasked with generating multiple very large xy data sets in csv format, then graphing them in Excel against each other on a super slow computer, then doing it all over again, for days on end. It involved much copying and pasting from multiple files, and then really repetitive graphing. Those familiar with Excel know that it's cool and powerful, but not always the most fun to work with, especially when the end result is likely to be thrown away after analysis. So what did I do? What anyone would, of course! Spend many more hours of my own personal time automating a tedious but ultimately short-lived task at work. XKCD summed it up perfectly here: https://xkcd.com/1319/.
 
 At first all it did was combine csv files in the working directory into one for easier excel graphing. (This made the task much less annoying)
 
