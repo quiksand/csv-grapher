@@ -27,7 +27,9 @@ git clone https://github.com/quiksand/csv-grapher.git
 2. Run the file:
   * On Windows, just go ahead and double-click the csvcomp.py file to run.
   * On OSX/Linux run from the termianl:
-  ```python3 csvcomp.py```
+  ```
+  python3 csvcomp.py
+  ```
 3. A GUI Window will open with your data graphed and a bunch of options to modify/export. Enjoy!
 
 ## Data
