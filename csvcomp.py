@@ -374,7 +374,7 @@ class GUI(tk.Frame):
         self.adjust_subplots()
     def remove_a_subplot(self):
         if self.no_of_subplots > 1:
-            for art in 
+            # for art in 
             del self.subplots[-1]
             Plot_Control_Row.plot_control_rows[self.no_of_subplots-1].destroy()
             del Plot_Control_Row.plot_control_rows[self.no_of_subplots-1]
