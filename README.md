@@ -5,6 +5,7 @@ CSV-GRAPHER is a utility for quickly graphing data in the .csv format. It automa
 
 ## Installation
 The script will run out-of-the-box so long as you have python 3.x installed with the matplotlib and numpy libraries.
+
 1. Install latest python (optional, if you already have python 3.x installed):
 https://www.python.org/
 2. Install matplotlib and numpy (optional, if you already have them):
@@ -21,19 +22,21 @@ git clone https://github.com/quiksand/csv-grapher.git
 ## Usage
 1. Move the csvcomp.py file to a directory with one or more csv files in it. This isn't strictly necessary, but recommended to avoid errors (see Known Issues and Limitations).
 2. Run the file:
-  *On Windows, just go ahead and double-click the csvcomp.py file to run.
-  *On OSX/Linux run from the termianl:
+  * On Windows, just go ahead and double-click the csvcomp.py file to run.
+  * On OSX/Linux run from the termianl:
   ```python3 csvcomp.py```
 3. A GUI Window will open with your data graphed and a bunch of options to modify/export. Enjoy!
 
 ## Data
 As it's impossible to predict how data will be sorted, I made the following assumptions about the format of the csv file:
+
 1. Data is ordered in two or more columns, with x data in the first column and y data separated in all other columns.
 2. All data should be numeric (or able to be interpreted as such), with the exception of title row(s).
 3. Title rows will be stripped and used as data series labels.
 
 ## Known Issues and Limitations
 These are mostly weird edge cases that I hope to fix down the line, but if you're having issues, look here first.
+
 1. If all series are removed, weird things can happen to the legend/cursor. It's usually fixed by adding a new series.
 2. Adding or removing a subplot with no series to graph will make program unhappy and it's probably best to restart.
 3. Two-finger scrolling with a magic trackpad on Macbook Pros (and probably Mac desktops) whilst the cursor is in the GUI window will crash the program outright without warning. Handy if you're too lazy to mouse to the close button. Known limitation of the matplotlib backend integration with tk.
