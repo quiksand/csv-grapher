@@ -25,11 +25,11 @@ git clone https://github.com/quiksand/csv-grapher.git
 ## Usage
 1. Move the csvcomp.py file to a directory with one or more csv files in it. This isn't strictly necessary, but recommended to avoid errors (see Known Issues and Limitations).
 2. Run the file:
-  * On Windows, just go ahead and double-click the csvcomp.py file to run.
-  * On OSX/Linux run from the termianl:
-    ```
+ * On Windows, just go ahead and double-click the csvcomp.py file to run.
+ * On OSX/Linux run from the termianl:
+     ```
     python3 csvcomp.py
-    ```
+     ```
 3. A GUI Window will open with your data graphed and a bunch of options to modify/export. Enjoy!
 
 ## Data
