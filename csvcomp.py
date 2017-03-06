@@ -133,6 +133,7 @@ class SnaptoCursor(object):
 
 #TODO Rearrange widgets to make more sense in layout
 class GUI(tk.Frame):
+    gui = None
     def __init__(self, master):
         #TODO: Abstract this out to somewhere
         #argument parsing
@@ -246,6 +247,7 @@ class GUI(tk.Frame):
         self.add_plot_button.grid(row=6, column=2)
         self.remove_plot_button.grid(row=6, column=3)
         self.toolbar_frame.grid(row=7, column=0, columnspan=5, sticky=tk.W)
+        GUI.gui = self
 
 #DELETE########################################################################
     def misc(self):
@@ -426,13 +428,24 @@ class GUI(tk.Frame):
     #     for series in Series.obj_list.values():
     #         self.add_list_item(series)
     #TODO: Change behavior so graphs are selectable
+
 class Excel_Series_Options_Row(tk.Frame):
+    rows = {}
     def __init__(self, master, row):
+        tk.Frame.__init__(self, master)
+        self.series = row.series
         self.series_label = ttk.Label(self,
-                                    text= row.series.label)
-        for i in range(self.master.no_of_subplots):
-            print('hello')
+                                    text=self.series.label)
+        self.subplot_check_boxes = []
+        for i in range(GUI.gui.no_of_subplots):
+            subplot_check_box = ttk.Checkbutton(self,
+                                                # variable=self.grid_var,
+                                                text='Plot {}:'.format(i+1),
+                                                command=todo)
+            subplot_check_box.pack(side=tk.LEFT)
+            self.subplot_check_boxes.append(subplot_check_box)
         self.grid()
+        Excel_Series_Options_Row.rows[self.series.label] = self
 
 class Excel_Export_Window(tk.Toplevel):
     no_instance = True
@@ -440,15 +453,14 @@ class Excel_Export_Window(tk.Toplevel):
         Excel_Export_Window.no_instance = False
         tk.Toplevel.__init__(self, master)
         self.title('Export to Excel')
-        self.blah = ttk.Label(master=self, text='Put something Here!!')
-        self.blah.pack(fill=tk.BOTH, expand=1)
+        # self.blah = ttk.Label(master=self, text='Put something Here!!')
+        # self.blah.gri(fill=tk.BOTH, expand=1)
         self.series_options_frame = ttk.Frame(self)
         # self.plot_options_frame = tk.Frame(self, bg="black", bd=1)
         print(Series_Control_Row.control_rows.values())
         print(len(Series_Control_Row.control_rows))
-        for row in Series_Control_Row.control_rows.keys():
-            print('HERE')
-            # Excel_Series_Options_Row(series_options_frame, row)
+        for row in Series_Control_Row.control_rows.values():
+            Excel_Series_Options_Row(self.series_options_frame, row)
         self.series_options_frame.grid(row=0, column=0, padx=10, pady=10, sticky=tk.N+tk.S)
         # self.plot_options_frame.grid(row=0, column=0, padx=10, pady=10, sticky=tk.N+tk.S)
 
