@@ -1,8 +1,8 @@
 TODO Next
-Start at 553
-Finish reset button on plot controls
-read default axes
-Remove extraneous files from github
+read default axes or find
+Change csv output to include more series x values
+make command line operations to just auto generate csv or excel files
+make gui window for exporting csv (filename, checked series, x data, etc.)
 
 EXTRAS
 Make installer script for Windows
@@ -27,6 +27,7 @@ smooth graphing option
 graph as points option
 edit button/fields for series and axis titles
 create template config file?
+Reset plot button - requires code overhaul.
 
 SERIES CONTROLS
 Fix title bar

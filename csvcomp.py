@@ -23,6 +23,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 import numpy as np
+import exceltest
 
 # class OnHover(object):
 #     """
@@ -259,9 +260,10 @@ class GUI(tk.Frame):
             self.canvas.show()
     def todo4(self):
         # self.fig.axes[0].scatter(Series.obj_list['Delete'].x,Series.obj_list['Delete'].y, label = Series.obj_list['Delete'].label)
-        print(self.fig.axes[0].spines)
-        self.fig.axes[0].spines['bottom'].set_smart_bounds(True)
-        self.canvas.show()
+        # print(self.fig.axes[0].spines)
+        # self.fig.axes[0].spines['bottom'].set_smart_bounds(True)
+        # self.canvas.show()
+        exceltest.testfunc([Series.obj_list['Delete'],Series.obj_list['Delete']])
         # self.fig.axes[0].get_smart_bounds()
     def on_pick(self, event):
         line = event.artist
@@ -714,8 +716,7 @@ class Series_Control_Row(GUI):
         for cursor in SnaptoCursor.cursors.values():
             cursor.update_series(self.series)
         # self.master.master.cursor[0].update_series(self.series)
-        # print(self.master.master.radio_var.get())
-        # todo()
+
 #Series object stores information about the series to be graphed
 class Series:
     obj_list = {}
@@ -728,7 +729,6 @@ class Series:
         self.y = y
         self.plot_type = 'line'
         self.artists = []
-        # self.axes_index = [None]*4
         self.csv_path = path_to_csv
         self.remove_title_rows()
         self.x = [float(x) for x in self.x]
