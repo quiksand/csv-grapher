@@ -25,30 +25,9 @@ from tkinter import filedialog
 import numpy as np
 import exceltest
 
-# class OnHover(object):
-#     """
-#     Thanks to Joe Kington
-#     https://stackoverflow.com/questions/27888663/set-hand-cursor-for-picking-matplotlib-text
-#     (Also it currently doesn't work for this app)
-#     """
-#     def __init__(self, artist, cursor='coffee_mug'):
-#         self.artist = artist
-#         self.cursor = cursor
-#         self.default_cursor = tkagg.cursord[1]
-#         self.fig = artist.ax.figure
-#
-#     def __call__(self, event):
-#         inside, _ = self.artist.contains(event)
-#         if inside:
-#             tkagg.cursord[1] = self.cursor
-#         else:
-#             tkagg.cursord[1] = self.default_cursor
-#         self.fig.canvas.toolbar.set_cursor(1)
-
-
 class SnaptoCursor(object):
     """
-    Code credit: Matplotlib.org documentation.
+    Cursor object that tracks series data on plot.
     """
     cursors = {}
     #TODO: Give an optional initial x state coord
@@ -76,6 +55,7 @@ class SnaptoCursor(object):
         # SnaptoCursor.cursors[self.series.label] = self
         SnaptoCursor.cursors[self.ax_num] = self
     def mouse_move(self, event):
+        #mostly just returns if events are's just right
         if not event.inaxes:
             return
         if event.button != 1:
@@ -87,6 +67,7 @@ class SnaptoCursor(object):
         self.last_event_x = event.xdata
         self.update_position()
     def update_position(self):
+        #the real meat and potatoes. updates cursor drawing.
         index = np.searchsorted(self.x, [self.last_event_x])[0]
         x = self.x[index]
         y = self.y[index]
@@ -115,8 +96,6 @@ class SnaptoCursor(object):
                 print('Nothing to put a cursor on')
                 self.hide()
                 del self
-                # del SnaptoCursor.cursors
-                # print(SnaptoCursor.cursors)
                 return
             for key in Series.obj_list.keys():
                 self.master.radio_var.set(key)
@@ -127,12 +106,13 @@ class SnaptoCursor(object):
         self.update_position()
     def update_axes(self):
         self.axes = self.master.fig.axes
-    # def mouse_pick(self, event):
-    #     line = event.artist
-    #     print('PICKED {}'.format(line))
 
 #TODO Rearrange widgets to make more sense in layout
 class GUI(tk.Frame):
+    """Main GUI Window
+    Basically a giant container for everything on the screen.
+    This class is a tad bloated. A redesign is encouraged.
+    """
     gui = None
     def __init__(self, master):
         #TODO: Abstract this out to somewhere
@@ -151,7 +131,6 @@ class GUI(tk.Frame):
             if not check_path(csv_path):
                 print("Error: File path does not exist or is not correct format")
                 return 1
-            # Series(csv_path)
             self.read_in_csv(csv_path)
 
         #procedure if directory is given or file not specified
@@ -199,47 +178,30 @@ class GUI(tk.Frame):
         self.remove_plot_button = ttk.Button(self,
                                     text="Remove Plot",
                                     command=self.remove_a_subplot)
-        self.test_button = ttk.Button(self.export_button_frame,
-                                    text='Test Button',
-                                    command=self.todo5)
-        self.test_button_2 = ttk.Button(self.export_button_frame,
-                                    text='Test Button 2',
-                                    command=self.todo4)
-        # self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
+        # self.test_button = ttk.Button(self.export_button_frame,
+        #                             text='Test Button',
+        #                             command=self.todo5)
+        # self.test_button_2 = ttk.Button(self.export_button_frame,
+        #                             text='Test Button 2',
+        #                             command=self.todo4)
+
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)
         self.canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-        # self.canvas.get_tk_widget().grid(row=0, column=0, columnspan=5, rowspan=5)
-
-        # self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
         self.toolbar = NavigationToolbar2TkAgg(self.canvas, self.toolbar_frame)
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-        # self.canvas._tkcanvas.grid(row=3, column=0, columnspan=5)
 
         self.header_bar = Series_Control_Row_Title_Bar(self.legend_list_frame)
 
         self.adjust_subplots()
-        # self.add_all_list_items()
-
-        # self.cursor = SnaptoCursor(self, Series.obj_list['Delete'])
-        # self.cid = self.canvas.mpl_connect('motion_notify_event', self.cursor.mouse_move)
-        # self.cid2 = self.canvas.mpl_connect('pick_event', self.cursor.mouse_pick)
-        # cid3 = self.canvas.mpl_connect('pick_event', self.on_pick)
-        # cid4 = self.canvas.mpl_connect('motion_notify_event', self.canvas.onHilite)
-        # tkagg.cursord[cursors.POINTER] = 'sb_h_double_arrow'
-        # text = self.fig.axes[0].text(0.5, 0.5, 'TEST', ha='center', va='center', size=25)
-        # print()
-        # print(text.axes.figure)
-        # cid4 = self.canvas.mpl_connect('motion_notify_event', OnHover(self.cursor))
-        # cid4 = self.canvas.mpl_connect('motion_notify_event', OnHover(self.canvas))
 
         tk.Grid.rowconfigure(self, 0, weight=1)
         tk.Grid.columnconfigure(self, 0, weight=1)
         self.open_button.grid(row=5, column=5)
         self.export_csv_button.grid(sticky=tk.E+tk.W)
         self.export_excel_button.grid(sticky=tk.E+tk.W)
-        self.test_button.grid(sticky=tk.E+tk.W)
-        self.test_button_2.grid(sticky=tk.E+tk.W)
+        # self.test_button.grid(sticky=tk.E+tk.W)
+        # self.test_button_2.grid(sticky=tk.E+tk.W)
         self.graph_frame.grid(row=0, column=0, columnspan=5, rowspan=5, sticky=tk.N+tk.E+tk.W+tk.S)
         self.legend_list_frame.grid(row=1, column=5, rowspan=4, padx=10, pady=10, sticky=tk.N+tk.S)
         self.export_button_frame.grid(row=6, column=5)
@@ -250,37 +212,12 @@ class GUI(tk.Frame):
         GUI.gui = self
 
 #DELETE########################################################################
-    def misc(self):
-        # tkagg.cursord[1] = 'coffee_mug'
-        # self.canvas.set_cursor(1)
-        self.graph_frame.configure(cursor='sizing')
-    def todo2(self, val):
-        print(val)
-    def todo3(self):
-        for ax in self.fig.axes:
-            self.legend = plt.legend()
-            self.canvas.show()
     def todo4(self):
-        # self.fig.axes[0].scatter(Series.obj_list['Delete'].x,Series.obj_list['Delete'].y, label = Series.obj_list['Delete'].label)
-        # print(self.fig.axes[0].spines)
-        # self.fig.axes[0].spines['bottom'].set_smart_bounds(True)
-        # self.canvas.show()
         exceltest.testfunc([series for series in Series.obj_list.values()])
-        # self.fig.axes[0].get_smart_bounds()
-    def on_pick(self, event):
-        line = event.artist
-        xdata, ydata = line.get_data()
-        ind = event.ind
-        print('on pick line:', line)
     def todo5(self):
-        # self.cursor.hide()
         self.open_excel_export_window()
-        # print(plt.rcParams)
-    def todo6(self):
-        # self.fig.axes[0].grid(False)
-        # self.canvas.show()
-        print(self.fig.ax[0].spines)
 #/DELETE#######################################################################
+
     def open_excel_export_window(self):
         if Excel_Export_Window.no_instance:
             Excel_Export_Window(self)
@@ -303,9 +240,6 @@ class GUI(tk.Frame):
                 label = label + ' - Series {}'.format(i)
             new_series.append(Series(cols[0], cols[i], path_to_csv, label))
         return new_series
-    # def get_line(self, series, ax):
-    #     line = [line for line in ax.lines if line.get_label()==series.label][0]
-    #     return line
     def plot_series(self, series, axes=None):
         # series.axes_index = []
         if axes != None:
@@ -335,10 +269,6 @@ class GUI(tk.Frame):
     def plot_cursors(self):
         self.cursor = [None]*self.no_of_subplots
         self.cid = [None]*self.no_of_subplots
-        # if self.header_bar.header.cursor_var.get():
-        # for row in Series_Control_Row.control_rows.values():
-        #     if row.
-        # print('HERE: {}'.format(self.radio_var.get()))
         cursor_series = self.radio_var.get()
         if cursor_series == '':
             return
@@ -362,7 +292,6 @@ class GUI(tk.Frame):
             self.subplots[i].grid(Plot_Control_Row.plot_control_rows[i].grid_var.get())
         self.plot_multiple_series()
         self.plot_cursors()
-        # self.cursor.update_axes()
         self.fig.tight_layout()
         self.canvas.show()
     def add_a_subplot(self):
@@ -410,7 +339,7 @@ class GUI(tk.Frame):
         with open(of, 'w', newline='') as newcsv:
             writer = csv.writer(newcsv)
             writer.writerows(rows)
-    #TODO: Make this logic better -
+    #TODO: Make this logic better
     def load_file(self):
         f_names = tk.filedialog.askopenfilename(filetypes=(("Csv files", "*.csv"),
             ("All files", "*.*")), multiple=True, )
@@ -420,14 +349,6 @@ class GUI(tk.Frame):
                 new_series = self.read_in_csv(each_file)
                 for series in new_series:
                     self.plot_series(series)
-                    # self.add_list_item(series)
-            # self.open_button.pack()
-    # def add_list_item(self, series):
-    #     Series_Control_Row(self.legend_list_frame, series)
-    # def add_all_list_items(self):
-    #     for series in Series.obj_list.values():
-    #         self.add_list_item(series)
-    #TODO: Change behavior so graphs are selectable
 
 class Excel_Series_Options_Row(tk.Frame):
     rows = {}
@@ -439,7 +360,6 @@ class Excel_Series_Options_Row(tk.Frame):
         self.subplot_check_boxes = []
         for i in range(GUI.gui.no_of_subplots):
             subplot_check_box = ttk.Checkbutton(self,
-                                                # variable=self.grid_var,
                                                 text='Plot {}:'.format(i+1),
                                                 command=todo)
             subplot_check_box.pack(side=tk.LEFT)
@@ -672,6 +592,7 @@ class Plot_Control_Row(GUI):
         self.rescale_y_axes(a, b)
 
 class Series_Control_Row_Title_Bar(GUI):
+    """It's just a title bar for the list of series control rows."""
     header = None
     def __init__(self, master):
         tk.Frame.__init__(self, master)
@@ -722,18 +643,45 @@ class Series_Control_Row_Title_Bar(GUI):
                 row.checkbox.invoke()
 
 class Edit_Series_Window(tk.Toplevel):
+    """Edit Series Window is accessed via the '...' button in the series list.
+    This window provides extra options for altering series data and display.
+    Only one window may be open at any given time.
+    Currently only scaling data is allowed from this window.
+    """
     no_instance = True
     def __init__(self, master, series):
         Edit_Series_Window.no_instance = False
         tk.Toplevel.__init__(self, master)
         self.series = series
+        self.scale = tk.DoubleVar()
+        self.scale.set(1)
         self.title('Edit Series')
-        self.blah = ttk.Label(master=self, text='Put something Here!!')
+        self.blah = ttk.Label(master=self, text='Rescales the series y values')
+        self.update_btn = ttk.Button(self,
+                                    text = 'Rescale Series',
+                                    command = self.rescale_series)
+        self.adjustment_entry = ttk.Entry(self,
+                                    width = 5,
+                                    text = 'Scale Value',
+                                    textvariable = self.scale)
+        self.adjustment_entry.pack(fill=tk.BOTH, expand=1)
+        self.update_btn.pack(fill=tk.BOTH, expand=1)
         self.blah.pack(fill=tk.BOTH, expand=1)
     def __del__(self):
+        # Make sure the static class variable is reset so more windows can be opened again
         Edit_Series_Window.no_instance = True
+    def rescale_series(self):
+        # Currently only scales the data. To update graphs, add or remove a graph.
+        scale = self.scale.get()
+        for i in range(len(self.series.y)):
+            self.series.y[i] = self.series.y[i] * scale
 
 class Series_Control_Row(GUI):
+    """ Control Row Class for series data.
+    One of these will exist for every data series.
+    There are options to select a cursor, remove/hide/show the graph.
+    Extra options are allowed through use of the '...' button.
+    """
     control_rows = {}
     def __init__(self, master, series):
         tk.Frame.__init__(self, master)
@@ -800,7 +748,6 @@ class Series_Control_Row(GUI):
         #         ax.lines.remove(self.get_line(ax))
         for artist in self.series.artists:
             artist.remove()
-
         del Series.obj_list[self.series.label]
         del Series_Control_Row.control_rows[self.series.label]
         if self.master.master.radio_var.get() == self.series.label:
@@ -817,6 +764,8 @@ class Series_Control_Row(GUI):
 
 #Series object stores information about the series to be graphed
 class Series:
+    """Main data variable for series data.
+    """
     obj_list = {}
     largest = {}
     def __init__(self, x, y, path_to_csv, label=None):
@@ -849,6 +798,7 @@ class Series:
             self.label = self.label + ' (1)'
         Series.obj_list[self.label] = self
     def is_number(self, s):
+        # checks for invalid numerical data.
         try:
             float(s)
             return True
