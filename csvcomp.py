@@ -178,6 +178,9 @@ class GUI(tk.Frame):
         self.remove_plot_button = ttk.Button(self,
                                     text="Remove Plot",
                                     command=self.remove_a_subplot)
+        self.rescale_button = ttk.Button(self.export_button_frame,
+                                    text='Rescale All Series',
+                                    command=self.rescale_all)
         # self.test_button = ttk.Button(self.export_button_frame,
         #                             text='Test Button',
         #                             command=self.todo5)
@@ -200,6 +203,7 @@ class GUI(tk.Frame):
         self.open_button.grid(row=5, column=5)
         self.export_csv_button.grid(sticky=tk.E+tk.W)
         self.export_excel_button.grid(sticky=tk.E+tk.W)
+        self.rescale_button.grid(sticky=tk.E+tk.W)
         # self.test_button.grid(sticky=tk.E+tk.W)
         # self.test_button_2.grid(sticky=tk.E+tk.W)
         self.graph_frame.grid(row=0, column=0, columnspan=5, rowspan=5, sticky=tk.N+tk.E+tk.W+tk.S)
@@ -217,7 +221,8 @@ class GUI(tk.Frame):
     def todo5(self):
         self.open_excel_export_window()
 #/DELETE#######################################################################
-
+    def rescale_all(self):
+        Edit_Series_Window(self)
     def open_excel_export_window(self):
         if Excel_Export_Window.no_instance:
             Excel_Export_Window(self)
@@ -508,16 +513,16 @@ class Plot_Control_Row(GUI):
         #                             text = 'Rescale',
         #                             command = self.update_bounds)
         #Reset button
-        self.reset_button = ttk.Button(self,
-                                    text = 'Reset',
-                                    command = self.reset_bounds)
+        # self.reset_button = ttk.Button(self,
+        #                             text = 'Reset',
+        #                             command = self.reset_bounds)
         #Key Bindings
         self.x_scale_box_lower.bind('<Return>', self.update_x_bounds)
         self.x_scale_box_upper.bind('<Return>', self.update_x_bounds)
         self.y_scale_box_lower.bind('<Return>', self.update_y_bounds)
         self.y_scale_box_upper.bind('<Return>', self.update_y_bounds)
         self.grid_checkbox.bind('<Return>', self.show_or_hide_grid)
-        self.reset_button.bind('<Return>', self.reset_bounds)
+        # self.reset_button.bind('<Return>', self.reset_bounds)
 
 
         # Packing
@@ -535,7 +540,7 @@ class Plot_Control_Row(GUI):
         self.y_scale_box_upper.grid(row=0, column=11, sticky=tk.N+tk.S)
         self.grid_checkbox.grid(row=0, column=12, sticky=tk.N+tk.S)
         # self.resize_button.grid(row=0, column=13, sticky=tk.N+tk.S)
-        self.reset_button.grid(row=0, column=13, sticky=tk.N+tk.S)
+        # self.reset_button.grid(row=0, column=13, sticky=tk.N+tk.S)
         self.grid(sticky=tk.E+tk.W)
 
         Plot_Control_Row.plot_control_rows[self.subplot_index] = self
@@ -649,32 +654,44 @@ class Edit_Series_Window(tk.Toplevel):
     Currently only scaling data is allowed from this window.
     """
     no_instance = True
-    def __init__(self, master, series):
+    def __init__(self, master, series=None):
         Edit_Series_Window.no_instance = False
         tk.Toplevel.__init__(self, master)
         self.series = series
         self.scale = tk.DoubleVar()
         self.scale.set(1)
         self.title('Edit Series')
-        self.blah = ttk.Label(master=self, text='Rescales the series y values')
-        self.update_btn = ttk.Button(self,
-                                    text = 'Rescale Series',
-                                    command = self.rescale_series)
-        self.adjustment_entry = ttk.Entry(self,
-                                    width = 5,
-                                    text = 'Scale Value',
-                                    textvariable = self.scale)
-        self.adjustment_entry.pack(fill=tk.BOTH, expand=1)
-        self.update_btn.pack(fill=tk.BOTH, expand=1)
-        self.blah.pack(fill=tk.BOTH, expand=1)
+        self.lab = ttk.Label(master=self, text='Rescales the series y values')
+        if self.series is not None:
+            self.update_btn = ttk.Button(self,
+                                        text = 'Rescale Series',
+                                        command = self.rescale_series)
+            self.adjustment_entry = ttk.Entry(self, textvariable=self.scale)
+            self.lab.pack(fill=tk.BOTH, expand=1)
+            self.adjustment_entry.pack(fill=tk.BOTH, expand=1)
+            self.update_btn.pack(fill=tk.BOTH, expand=1)
+            self.adjustment_entry.bind('<Return>', self.rescale_series)
+        else:
+            self.update_btn = ttk.Button(self,
+                                        text = 'Rescale All Series',
+                                        command = self.rescale_all_series)
+            self.adjustment_entry = ttk.Entry(self, textvariable=self.scale)
+            self.lab.pack(fill=tk.BOTH, expand=1)
+            self.adjustment_entry.pack(fill=tk.BOTH, expand=1)
+            self.update_btn.pack(fill=tk.BOTH, expand=1)
+            self.adjustment_entry.bind('<Return>', self.rescale_all_series)
     def __del__(self):
         # Make sure the static class variable is reset so more windows can be opened again
         Edit_Series_Window.no_instance = True
-    def rescale_series(self):
+    def rescale_series(self, event=None):
         # Currently only scales the data. To update graphs, add or remove a graph.
         scale = self.scale.get()
-        for i in range(len(self.series.y)):
-            self.series.y[i] = self.series.y[i] * scale
+        self.series.rescale_series(scale)
+    def rescale_all_series(self, event=None):
+        scale = self.scale.get()
+        for series in Series.obj_list.values():
+            series.rescale_series(scale)
+
 
 class Series_Control_Row(GUI):
     """ Control Row Class for series data.
@@ -817,6 +834,10 @@ class Series:
         return self.csv_path
     def get_attr(self):
         print(self.label, self.csv_path, self.show)
+    def rescale_series(self, scale):
+        # Currently only scales the data. To update graphs, add or remove a graph.
+        for i in range(len(self.y)):
+            self.y[i] = self.y[i] * scale
 
 def todo():
     print('TODO')
