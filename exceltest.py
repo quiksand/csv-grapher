@@ -81,6 +81,7 @@ def write_series_to_excel(series_list, options={'graph':True}):
     if options['graph']:
         # for plot in plots
         worksheet.insert_chart('A7', chart)
+        add_chart_props(chart)
     # graph_excel(workbook, worksheet)
     workbook.close()
     print('Created Excel workbook')
@@ -91,7 +92,17 @@ def add_series_to_chart(series, col, chart):
                         'categories': ['Sheet1', 1, col-1, len(series.x), col-1],
                         'values': ['Sheet1', 1, col, len(series.x), col]
                         })
-
+def add_chart_props(chart):
+    chart.set_legend({'position': 'overlay_right'})
+    chart.set_title({'name': 'CHANGEME'})
+    chart.set_y_axis({
+        'name': 'RMS Amplitude (nm)',
+        'major_gridlines': {'visible': True}
+        })
+    chart.set_x_axis({
+        'name': 'Frequency (kHz)',
+        'major_gridlines': {'visible': True}
+        })
 # def graph_excel(workbook, worksheet):
 #     chart = workbook.add_chart({'type': 'scatter', 'subtype':'straight'})
 #     # chart.add_series({
