@@ -80,7 +80,7 @@ def write_series_to_excel(series_list, options={'graph':True}):
         col += 1
     if options['graph']:
         # for plot in plots
-        worksheet.insert_chart('A7', chart)
+        worksheet.insert_chart('B7', chart, {'x_scale': 2.5, 'y_scale': 2})
         add_chart_props(chart)
     # graph_excel(workbook, worksheet)
     workbook.close()
@@ -93,15 +93,24 @@ def add_series_to_chart(series, col, chart):
                         'values': ['Sheet1', 1, col, len(series.x), col]
                         })
 def add_chart_props(chart):
-    chart.set_legend({'position': 'overlay_right'})
-    chart.set_title({'name': 'CHANGEME'})
+    chart.set_legend({
+        'position': 'overlay_right',
+        'font': {'size': 12}
+        })
+    chart.set_title({
+        'name': 'CHANGEME',
+        'name_font': {'bold': False, 'size': 14}
+        })
     chart.set_y_axis({
         'name': 'RMS Amplitude (nm)',
-        'major_gridlines': {'visible': True}
+        'major_gridlines': {'visible': True},
+        'name_font': {'bold': False, 'size': 12}
         })
     chart.set_x_axis({
         'name': 'Frequency (kHz)',
-        'major_gridlines': {'visible': True}
+        'major_gridlines': {'visible': True},
+        'name_font': {'bold': False, 'size': 12},
+        'max': 2.0
         })
 # def graph_excel(workbook, worksheet):
 #     chart = workbook.add_chart({'type': 'scatter', 'subtype':'straight'})

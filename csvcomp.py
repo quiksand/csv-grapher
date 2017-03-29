@@ -221,6 +221,7 @@ class GUI(tk.Frame):
     def todo5(self):
         self.open_excel_export_window()
 #/DELETE#######################################################################
+
     def rescale_all(self):
         Edit_Series_Window(self)
     def open_excel_export_window(self):
@@ -316,7 +317,7 @@ class GUI(tk.Frame):
         self.master.quit()
         self.master.destroy()
     def export_excel(self):
-        todo()
+        self.todo4()
     def export_csv(self):
         #TODO: Simplify, possibly remove extra call to write_csv
         #TODO: Grey out button if no plots are in Series.obj_list
@@ -601,33 +602,35 @@ class Series_Control_Row_Title_Bar(GUI):
     header = None
     def __init__(self, master):
         tk.Frame.__init__(self, master)
-        self.config(bg="black", bd=1)
+        # self.config(bg="black", bd=1)
         self.cursor_var = tk.BooleanVar()
         self.cursor_var.set(1)
         self.checkvar2 = tk.BooleanVar()
         self.checkvar2.set(1)
         self.cursor_checkbox = ttk.Checkbutton(self,
-                                    variable=self.cursor_var,
-                                    command=self.show_or_hide_cursors)
+                                    variable = self.cursor_var,
+                                    command = self.show_or_hide_cursors)
         self.show_hide_checkbox = ttk.Checkbutton(self,
-                                    variable=self.checkvar2,
-                                    command=self.show_or_hide_all)
+                                    variable = self.checkvar2,
+                                    command = self.show_or_hide_all)
         self.series_header_label = ttk.Label(self,
-                                    anchor=tk.CENTER,
+                                    anchor = tk.CENTER,
                                     text = 'Series',
-                                    width = 25)
+                                    width = 40)
         self.series_edit_label = ttk.Label(self,
-                                    anchor=tk.CENTER,
+                                    anchor = tk.CENTER,
+                                    width = 5,
                                     text = 'Edit')
         self.series_remove_label = ttk.Label(self,
-                                    anchor=tk.CENTER,
+                                    anchor = tk.CENTER,
+                                    width = 11,
                                     text = 'Remove')
         self.cursor_checkbox.grid(row=0, column=0, sticky=tk.N+tk.S)
         self.show_hide_checkbox.grid(row=0, column=1, sticky=tk.N+tk.S)
         self.series_header_label.grid(row=0, column=2, sticky=tk.N+tk.S)
         self.series_edit_label.grid(row=0, column=3, sticky=tk.N+tk.S)
         self.series_remove_label.grid(row=0, column=4, sticky=tk.N+tk.S)
-        self.grid(sticky=tk.E+tk.W)
+        self.grid(sticky=tk.W+tk.E)
         Series_Control_Row_Title_Bar.header = self
     def show_or_hide_cursors(self):
         #can probably simplify this logic, but it works
@@ -680,6 +683,8 @@ class Edit_Series_Window(tk.Toplevel):
             self.adjustment_entry.pack(fill=tk.BOTH, expand=1)
             self.update_btn.pack(fill=tk.BOTH, expand=1)
             self.adjustment_entry.bind('<Return>', self.rescale_all_series)
+        self.adjustment_entry.focus()
+        self.adjustment_entry.selection_range(0, tk.END)
     def __del__(self):
         # Make sure the static class variable is reset so more windows can be opened again
         Edit_Series_Window.no_instance = True
@@ -687,10 +692,14 @@ class Edit_Series_Window(tk.Toplevel):
         # Currently only scales the data. To update graphs, add or remove a graph.
         scale = self.scale.get()
         self.series.rescale_series(scale)
+        self.destroy()
+        self.master.adjust_subplots()
     def rescale_all_series(self, event=None):
         scale = self.scale.get()
         for series in Series.obj_list.values():
             series.rescale_series(scale)
+        self.destroy()
+        self.master.adjust_subplots()
 
 
 class Series_Control_Row(GUI):
@@ -715,27 +724,30 @@ class Series_Control_Row(GUI):
                                     value=self.series.label,
                                     command=self.select_cursor)
         self.checkbox = ttk.Checkbutton(self,
-                                    # width=25,
-                                    variable=self.checkvar,
-                                    # text=self.series.label,
-                                    command=self.show_or_hide_line)
+                                    # width = 25,
+                                    variable = self.checkvar,
+                                    # text = self.series.label,
+                                    command = self.show_or_hide_line)
         self.series_label = ttk.Label(self,
-                                    width=25,
-                                    text=self.series.label)
+                                    width = 40,
+                                    text = self.series.label)
         self.edit_button = ttk.Button(self,
                                     text="...",
-                                    width=1,
-                                    command=self.open_edit_window)
+                                    width = 3,
+                                    command = self.open_edit_window)
         self.close_button = ttk.Button(self,
-                                    text="X",
-                                    width=1,
-                                    command=self.remove_series)
+                                    text = "X",
+                                    width = 3,
+                                    command = self.remove_series)
         self.radio_btn.grid(row=0, column=0, sticky=tk.N+tk.S)
         self.checkbox.grid(row=0, column=1, sticky=tk.N+tk.S)
         self.series_label.grid(row=0, column=2, sticky=tk.N+tk.S)
-        self.edit_button.grid(row=0, column=3, sticky=tk.N+tk.S)
-        self.close_button.grid(row=0, column=4, sticky=tk.N+tk.S)
-        self.grid()
+        # self.edit_button.grid(row=0, column=3, padx = 1, sticky=tk.N+tk.S)
+        # self.close_button.grid(row=0, column=4, padx = 100, sticky=tk.N+tk.S)
+        self.edit_button.grid(row=0, column=3, padx = 4, sticky=tk.N+tk.S)
+        self.close_button.grid(row=0, column=4, padx = 15, sticky=tk.N+tk.S)
+        self.grid(sticky=tk.W+tk.E)
+        # self.pack()
         Series_Control_Row.control_rows[self.series.label] = self
     def open_edit_window(self):
         if Edit_Series_Window.no_instance:
