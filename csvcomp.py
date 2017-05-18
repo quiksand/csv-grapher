@@ -24,6 +24,7 @@ from tkinter import ttk
 from tkinter import filedialog
 import numpy as np
 import exceltest
+import xlsxwriter as xw
 
 class SnaptoCursor(object):
     """
@@ -317,7 +318,7 @@ class GUI(tk.Frame):
         self.master.quit()
         self.master.destroy()
     def export_excel(self):
-        self.todo4()
+        exceltest.testfunc([series for series in Series.obj_list.values()])
     def export_csv(self):
         #TODO: Simplify, possibly remove extra call to write_csv
         #TODO: Grey out button if no plots are in Series.obj_list

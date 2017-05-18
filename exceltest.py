@@ -92,6 +92,7 @@ def add_series_to_chart(series, col, chart):
                         'categories': ['Sheet1', 1, col-1, len(series.x), col-1],
                         'values': ['Sheet1', 1, col, len(series.x), col]
                         })
+
 def add_chart_props(chart):
     chart.set_legend({
         'position': 'overlay_right',

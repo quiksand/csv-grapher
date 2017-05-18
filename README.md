@@ -15,6 +15,7 @@ The script will run out-of-the-box so long as you have python 3.x installed with
 ```
 pip install matplotlib
 pip install numpy
+pip install xlsxwriter
 ```
 
 3. Get the repo:
