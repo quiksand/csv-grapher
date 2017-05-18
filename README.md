@@ -9,7 +9,8 @@ The script will run out-of-the-box so long as you have python 3.x installed with
 1. Install latest python (optional, if you already have python 3.x installed):
 
   https://www.python.org/
-2. Install matplotlib and numpy (optional, if you already have them):
+
+2. Install matplotlib, numpy, and xlsxwriter (optional, if you already have them):
 
   In terminal or powershell:
 ```
@@ -47,8 +48,8 @@ These are mostly weird edge cases that I hope to fix down the line, but if you'r
 2. Adding or removing a subplot with no series to graph will make program unhappy and it's probably best to restart.
 3. Two-finger scrolling with a magic trackpad on Macbook Pros (and probably Mac desktops) whilst the cursor is in the GUI window will crash the program outright without warning. Handy if you're too lazy to mouse to the close button. Known limitation of the matplotlib backend integration with tk.
 4. Large and/or many data sets will slow things down substantially, especially adding/removing subplots.
-5. Standard matplotlib toolbar home/back/forward buttons may not work as expected after plot manipulation. (But won't break anything)
-6. Some GUI elements are a bit ugly on Mac, and really ugly on Windows (cross-platform library my @$$). Working on it!
+5. Standard matplotlib toolbar home/back/forward buttons may not work as expected after plot manipulation. (But won't necessarily break anything)
+6. Some GUI elements are a bit ugly on Macs (cross-platform library my @$$). Working on it!
 7. Currently limited to four subplots maximum.
 
 ## Inspiration & Development
@@ -62,10 +63,10 @@ Then there was a GUI for adding/removing plots and data series (Now I just neede
 
 Now I spend my time debugging and adding features to a program only I use, and only very occasionally (who am I kidding, this *is* my hobby)
 
-In the future, I'll make it just generate a complete Excel file (or maybe someone will finally pay me to write code for a living and I'll do something else with my free time :) )
+In the future maybe someone will finally pay me to write code for a living and I'll do something else with my free time :)
 
 ## Future Development
-I am currently looking to wrap up the larger feature set, and put this on the back burner to go work on other things. That means there's going to be some bugs left over, but mostly just weird edge-case type stuff. I may come back to it if I continue needing to work with large data sets on slow computers.
+I have wrapped up the larger feature set, and put this on the back burner to go work on other things. That means there's going to be some bugs left over, but mostly just weird edge-case type stuff. I may come back to it if I continue needing to work with large data sets on slow computers.
 
 ## Contributing
 Feel free to fork and hack away!

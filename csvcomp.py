@@ -317,8 +317,6 @@ class GUI(tk.Frame):
     def _quit(self):
         self.master.quit()
         self.master.destroy()
-    def export_excel(self):
-        exceltest.testfunc([series for series in Series.obj_list.values()])
     def export_csv(self):
         #TODO: Simplify, possibly remove extra call to write_csv
         #TODO: Grey out button if no plots are in Series.obj_list
@@ -327,7 +325,7 @@ class GUI(tk.Frame):
         if fname:
             self.write_csv(fname)
     def write_csv(self, of):
-        #TODO: Simplify. In future, add Excel functionality?
+        #TODO: Simplify.
         labels = ['Frequency (kHz)']
         xs = []
         ys = []
@@ -346,6 +344,74 @@ class GUI(tk.Frame):
         with open(of, 'w', newline='') as newcsv:
             writer = csv.writer(newcsv)
             writer.writerows(rows)
+    def export_excel(self):
+        fname = tk.filedialog.asksaveasfilename(filetypes=(("xlsx", "*.xlsx"),
+            ("All files", "*.*") ), defaultextension=".xlsx", initialfile="CombinedXlsx.xlsx")
+        if fname:
+            self.write_xlsx(fname)
+    def write_xlsx(self, of):
+        export_list = []
+        for series in Series.obj_list.values():
+            if series.show:
+                export_list.append(series)
+        self.churn_out_excel(export_list, of)
+    def churn_out_excel(self, series_list, of, options={'graph':True}):
+        '''Takes a list of series and writes them to excel workbook'''
+        workbook = xw.Workbook(of)
+        worksheet = workbook.add_worksheet()
+        if options['graph']:
+            # for plot in plots:
+            # for i in range(number_of_charts):
+            chart = workbook.add_chart({'type': 'scatter', 'subtype':'straight'})
+        row = 0
+        col = 0
+        for series in series_list:
+            row = 0
+            worksheet.write(row, col, series.label + ' X')
+            row += 1
+            worksheet.write_column(row, col, series.x)
+            row = 0
+            col += 1
+            worksheet.write(row, col, series.label)
+            row += 1
+            worksheet.write_column(row, col, series.y)
+            if options['graph']:
+                # for plot in plots
+                self.add_series_to_chart(series, col, chart)
+            col += 1
+        if options['graph']:
+            # for plot in plots
+            worksheet.insert_chart('B7', chart, {'x_scale': 2.5, 'y_scale': 2})
+            self.add_chart_props(chart)
+        # graph_excel(workbook, worksheet)
+        workbook.close()
+        print('Created Excel workbook: {}'.format(of))
+    def add_series_to_chart(self, series, col, chart):
+        chart.add_series({
+                            'name': ['Sheet1', 0, col, 0, col],
+                            'categories': ['Sheet1', 1, col-1, len(series.x), col-1],
+                            'values': ['Sheet1', 1, col, len(series.x), col]
+                            })
+    def add_chart_props(self, chart):
+        chart.set_legend({
+            'position': 'overlay_right',
+            'font': {'size': 12}
+            })
+        chart.set_title({
+            'name': 'CHANGEME',
+            'name_font': {'bold': False, 'size': 14}
+            })
+        chart.set_y_axis({
+            'name': 'RMS Amplitude (nm)',
+            'major_gridlines': {'visible': True},
+            'name_font': {'bold': False, 'size': 12}
+            })
+        chart.set_x_axis({
+            'name': 'Frequency (kHz)',
+            'major_gridlines': {'visible': True},
+            'name_font': {'bold': False, 'size': 12},
+            'max': 2.0
+            })
     #TODO: Make this logic better
     def load_file(self):
         f_names = tk.filedialog.askopenfilename(filetypes=(("Csv files", "*.csv"),
