@@ -23,7 +23,6 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 import numpy as np
-import exceltest
 import xlsxwriter as xw
 
 class SnaptoCursor(object):
@@ -224,7 +223,8 @@ class GUI(tk.Frame):
 #/DELETE#######################################################################
 
     def rescale_all(self):
-        Edit_Series_Window(self)
+        if Edit_Series_Window.no_instance:
+            Edit_Series_Window(self)
     def open_excel_export_window(self):
         if Excel_Export_Window.no_instance:
             Excel_Export_Window(self)
@@ -729,45 +729,58 @@ class Edit_Series_Window(tk.Toplevel):
         tk.Toplevel.__init__(self, master)
         self.series = series
         self.scale = tk.DoubleVar()
+        self.offset = tk.DoubleVar()
         self.scale.set(1)
+        self.offset.set(0)
         self.title('Edit Series')
-        self.lab = ttk.Label(master=self, text='Rescales the series y values')
+        self.lab_rescale = ttk.Label(master=self, text='Y Scale')
+        self.protocol('WM_DELETE_WINDOW', self._quit)
         if self.series is not None:
             self.update_btn = ttk.Button(self,
-                                        text = 'Rescale Series',
-                                        command = self.rescale_series)
+                                        text = 'Rescale and Offset',
+                                        command = self.update)
             self.adjustment_entry = ttk.Entry(self, textvariable=self.scale)
-            self.lab.pack(fill=tk.BOTH, expand=1)
+            self.lab_rescale.pack(fill=tk.BOTH, expand=1)
             self.adjustment_entry.pack(fill=tk.BOTH, expand=1)
+            self.lab_offset = ttk.Label(master=self, text='Y offset')
+            self.offset_entry = ttk.Entry(self, textvariable=self.offset)
+            self.lab_offset.pack(fill=tk.BOTH, expand=1)
+            self.offset_entry.pack(fill=tk.BOTH, expand=1)
             self.update_btn.pack(fill=tk.BOTH, expand=1)
-            self.adjustment_entry.bind('<Return>', self.rescale_series)
+            self.bind('<Return>', self.update)
         else:
             self.update_btn = ttk.Button(self,
                                         text = 'Rescale All Series',
                                         command = self.rescale_all_series)
             self.adjustment_entry = ttk.Entry(self, textvariable=self.scale)
-            self.lab.pack(fill=tk.BOTH, expand=1)
+            self.lab_rescale.pack(fill=tk.BOTH, expand=1)
             self.adjustment_entry.pack(fill=tk.BOTH, expand=1)
             self.update_btn.pack(fill=tk.BOTH, expand=1)
             self.adjustment_entry.bind('<Return>', self.rescale_all_series)
         self.adjustment_entry.focus()
         self.adjustment_entry.selection_range(0, tk.END)
-    def __del__(self):
-        # Make sure the static class variable is reset so more windows can be opened again
+    def _quit(self):
         Edit_Series_Window.no_instance = True
+        self.destroy()
+    def update(self, event=None):
+        self.rescale_series()
+        self.offset_series_y()
+        #OH GOD NO WHY AM I DOING THIS. FIX IT FIX IT FIX IT FIX IT
+        self.master.master.master.adjust_subplots()
+        self._quit()
+    def offset_series_y(self, event=None):
+        offset = self.offset.get()
+        self.series.offset_series_y(offset)
     def rescale_series(self, event=None):
         # Currently only scales the data. To update graphs, add or remove a graph.
         scale = self.scale.get()
         self.series.rescale_series(scale)
-        self.destroy()
-        self.master.adjust_subplots()
     def rescale_all_series(self, event=None):
         scale = self.scale.get()
         for series in Series.obj_list.values():
             series.rescale_series(scale)
-        self.destroy()
         self.master.adjust_subplots()
-
+        self._quit()
 
 class Series_Control_Row(GUI):
     """ Control Row Class for series data.
@@ -913,6 +926,9 @@ class Series:
         return self.csv_path
     def get_attr(self):
         print(self.label, self.csv_path, self.show)
+    def offset_series_y(self, offset):
+        for i in range(len(self.y)):
+            self.y[i] += offset
     def rescale_series(self, scale):
         # Currently only scales the data. To update graphs, add or remove a graph.
         for i in range(len(self.y)):
