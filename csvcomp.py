@@ -148,8 +148,12 @@ class GUI(tk.Frame):
         self.no_of_subplots = 1
         self.subplot_layouts = [[111],[211,212],[211,223,224],[221,222,223,224]]
         self.subplots = [None]*self.no_of_subplots
-        self.xlabel = ['Frequency (kHz)']*4
-        self.ylabel = ['Amplitude (V)']*4
+        self.default_x_label = tk.StringVar()
+        self.default_x_label.set('Frequency (kHz)')
+        self.default_y_label = tk.StringVar()
+        self.default_y_label.set('Amplitude (V)')
+        self.xlabel = [self.default_x_label.get()]*4
+        self.ylabel = [self.default_y_label.get()]*4
         self.testvar=tk.DoubleVar()
         self.radio_var = tk.StringVar()
         #set radio_var to first series in dict of series. Probs a better way.
@@ -576,6 +580,11 @@ class Plot_Control_Row(GUI):
                                     variable=self.grid_var,
                                     text='Grid',
                                     command=self.show_or_hide_grid)
+        # Edit Button
+        self.edit_plot_button = ttk.Button(self,
+                                    text="...",
+                                    width = 3,
+                                    command = self.open_edit_plot_window)
         # Resize Button
         # self.resize_button = ttk.Button(self,
         #                             text = 'Rescale',
@@ -592,7 +601,6 @@ class Plot_Control_Row(GUI):
         self.grid_checkbox.bind('<Return>', self.show_or_hide_grid)
         # self.reset_button.bind('<Return>', self.reset_bounds)
 
-
         # Packing
         self.plot_label.grid(row=0, column=0, sticky=tk.N+tk.S)
         self.x_scale_label.grid(row=0, column=1, sticky=tk.N+tk.S)
@@ -607,6 +615,7 @@ class Plot_Control_Row(GUI):
         self.y_scale_slider.grid(row=0, column=10, sticky=tk.N+tk.S)
         self.y_scale_box_upper.grid(row=0, column=11, sticky=tk.N+tk.S)
         self.grid_checkbox.grid(row=0, column=12, sticky=tk.N+tk.S)
+        self.edit_plot_button.grid(row=0, column=13, sticky=tk.N+tk.S)
         # self.resize_button.grid(row=0, column=13, sticky=tk.N+tk.S)
         # self.reset_button.grid(row=0, column=13, sticky=tk.N+tk.S)
         self.grid(sticky=tk.E+tk.W)
@@ -619,6 +628,9 @@ class Plot_Control_Row(GUI):
     #TODO: Rethink the way the slider scales
     # def update_axes(self, axes):
     #     self.axes = axes
+    def open_edit_plot_window(self):
+        if Edit_Plot_Window.no_instance:
+            Edit_Plot_Window(self, self.subplot_index)
     def show_or_hide_grid(self, event=None):
         if event:
             self.grid_var.set(not self.grid_var.get())
@@ -663,6 +675,48 @@ class Plot_Control_Row(GUI):
         y = self.ybar.get()
         b = a+y*(b-a)
         self.rescale_y_axes(a, b)
+
+class Edit_Plot_Window(tk.Toplevel):
+    """Edit Plot Window is accessed via the '...' button in the plot control row.
+    This window provides extra options for altering plot data and display.
+    Only one window may be open at any given time.
+    Currently only axes name changes are allowed from this window.
+    """
+    no_instance = True
+    def __init__(self, master, index):
+        Edit_Series_Window.no_instance = False
+        self.index = index
+        tk.Toplevel.__init__(self, master)
+        self.x_label = tk.StringVar()
+        self.x_label.set(GUI.gui.xlabel[self.index])
+        self.y_label = tk.StringVar()
+        self.y_label.set(GUI.gui.ylabel[self.index])
+        self.title('Edit Plot')
+        self.protocol('WM_DELETE_WINDOW', self._quit)
+        self.lab_x = ttk.Label(master=self, text='X Axis Label')
+        self.lab_y = ttk.Label(master=self, text='Y Axis Label')
+        self.x_axis_label_entry = ttk.Entry(self, textvariable=self.x_label)
+        self.y_axis_label_entry = ttk.Entry(self, textvariable=self.y_label)
+        self.update_btn = ttk.Button(self,
+                                    text = 'Rescale and Offset',
+                                    command = self.update)
+        self.lab_x.pack(fill=tk.BOTH, expand=1)
+        self.x_axis_label_entry.pack(fill=tk.BOTH, expand=1)
+        self.lab_y.pack(fill=tk.BOTH, expand=1)
+        self.y_axis_label_entry.pack(fill=tk.BOTH, expand=1)
+        self.update_btn.pack(fill=tk.BOTH, expand=1)
+        self.bind('<Return>', self.update)
+    def _quit(self):
+        Edit_Series_Window.no_instance = True
+        self.destroy()
+    def update(self, event=None):
+        #This should be a GUI method, but there's a lot that should be different in this program...
+        GUI.gui.subplots[self.index].set_xlabel(self.x_label.get())
+        GUI.gui.xlabel[self.index] = self.x_label.get()
+        GUI.gui.subplots[self.index].set_ylabel(self.y_label.get())
+        GUI.gui.ylabel[self.index] = self.y_label.get()
+        GUI.gui.adjust_subplots()
+        self._quit()
 
 class Series_Control_Row_Title_Bar(GUI):
     """It's just a title bar for the list of series control rows."""
