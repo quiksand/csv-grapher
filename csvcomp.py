@@ -698,7 +698,7 @@ class Edit_Plot_Window(tk.Toplevel):
         self.x_axis_label_entry = ttk.Entry(self, textvariable=self.x_label)
         self.y_axis_label_entry = ttk.Entry(self, textvariable=self.y_label)
         self.update_btn = ttk.Button(self,
-                                    text = 'Rescale and Offset',
+                                    text = 'Update Axes Labels',
                                     command = self.update)
         self.lab_x.pack(fill=tk.BOTH, expand=1)
         self.x_axis_label_entry.pack(fill=tk.BOTH, expand=1)
