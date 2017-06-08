@@ -330,7 +330,7 @@ class GUI(tk.Frame):
             self.write_csv(fname)
     def write_csv(self, of):
         #TODO: Simplify.
-        labels = ['Frequency (kHz)']
+        labels = [GUI.gui.xlabel[0]]
         xs = []
         ys = []
         rows = []
@@ -406,12 +406,12 @@ class GUI(tk.Frame):
             'name_font': {'bold': False, 'size': 14}
             })
         chart.set_y_axis({
-            'name': 'RMS Amplitude (nm)',
+            'name': GUI.gui.ylabel[0],
             'major_gridlines': {'visible': True},
             'name_font': {'bold': False, 'size': 12}
             })
         chart.set_x_axis({
-            'name': 'Frequency (kHz)',
+            'name': GUI.gui.xlabel[0],
             'major_gridlines': {'visible': True},
             'name_font': {'bold': False, 'size': 12},
             'max': 2.0
