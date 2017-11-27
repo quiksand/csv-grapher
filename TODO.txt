@@ -1,5 +1,7 @@
 FOR KK
 Add option to color individual graphs
+remove hidden items from legend
+change sort order of graphs
 
 
 TODO Next
